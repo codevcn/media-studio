@@ -1,0 +1,68 @@
+mdia_tool:
+  flags:
+    - flag: "-h / --help"
+      description: "In hướng dẫn sử dụng ra terminal."
+
+  types:
+    - name: "open"
+      description: "Mở project trong IDE"
+      actions:
+        - id: "ACTION 00"
+          title: "Mở dự án (Open)"
+          command: "mdia open [-a]"
+          summary: "Mở project mdia-studio trong Editor/IDE."
+          details: "Dựa vào cờ -a, mặc định sẽ mở bằng lệnh `code` cho VSCode. Khi thêm -a sẽ sử dụng `anti` cho Antigravity IDE."
+          conditions: "Cần đảm bảo IDE đã đưa CLI vào biến môi trường PATH."
+
+    - name: "app"
+      description: "Ứng dụng GUI"
+      actions:
+        - id: "ACTION 01"
+          title: "Mở ứng dụng Video Player"
+          command: "mdia app player"
+          summary: "Khởi động giao diện người dùng cho Video Player."
+          details: "Chạy file `video_player.py` bằng Python."
+          conditions: "Không có"
+
+    - name: "video"
+      description: "Các tính năng xử lý video"
+      actions:
+        - id: "ACTION 02"
+          title: "Xóa Watermark/Logo"
+          command: "mdia video rm-logo"
+          summary: "Tự động xóa watermark/logo khỏi video."
+          details: "Chạy script `video_watermark_remover.py` sử dụng FFmpeg. Cấu hình vị trí logo hiện tại đang được fix cứng trong script."
+          conditions: "Cần cài đặt FFmpeg."
+
+    - name: "audio"
+      description: "Các tính năng xử lý âm thanh"
+      actions:
+        - id: "ACTION 03"
+          title: "Tách âm thanh"
+          command: "mdia audio extract <input_path> <output_path>"
+          summary: "Tách âm thanh từ file video sang chuẩn .wav hoặc .mp3."
+          details: "Sử dụng FFmpeg để process tách audio without re-encoding (đối với .wav, stream pcm_s16le, còn .mp3 encode qua libmp3lame)."
+          conditions: "Tham số input và output path là bắt buộc và phải là absolute path. Cần FFmpeg."
+
+    - name: "image"
+      description: "Các tính năng xử lý hình ảnh"
+      actions:
+        - id: "ACTION 04"
+          title: "Lật ảnh"
+          command: "mdia image flip"
+          summary: "Lật phương ngang đối với thư mục ảnh đầu vào."
+          details: "Chạy script `flip_image.py`. Hiện tại config đang hardcoded từ `input.jpg` chạy ra `output.jpg`."
+          conditions: "Cần cài đặt thư viện PIL (Pillow)."
+
+    - name: "media"
+      description: "Các tính năng xử lý media đa dụng"
+      actions:
+        - id: "ACTION 05"
+          title: "Cắt nhỏ file media"
+          command: "mdia media slice <input_path> <size_mb>"
+          summary: "Cắt file âm thanh/video dài thành nhiều phần kích thước bằng nhau."
+          details: "Sử dụng FFmpeg stream copy để cắt cực nhanh các loại file như .wav, .mp3, .mp4 theo dung lượng chỉ định mà không encode lại."
+          conditions: "Tham số input_path và size_mb bắt buộc."
+
+config:
+  ROOT_FOLDER_PATH: "Đường dẫn gốc của dự án mdia-studio."

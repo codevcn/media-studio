@@ -1,0 +1,38 @@
+===========================================
+# Media Studio CLI Help
+===========================================
+# Usage:
+mdia [[-h | --help] | <type> <action> [<value> [<extra>]]]
+
+# Available flags:
+-h, --help        :print this help.
+
+# Available types:
+app               :Ứng dụng GUI (Giao diện người dùng).
+video             :Các tính năng xử lý video.
+audio             :Các tính năng xử lý âm thanh.
+image             :Các tính năng xử lý hình ảnh.
+media             :Các tính năng xử lý media đa dụng.
+
+# Available actions:
+## app:
+   player     :Mở ứng dụng Video Player.
+
+## video:
+   rm-logo        :Xóa watermark/logo khỏi video (theo cấu hình cố định trong code).
+
+## audio:
+   extract        :Tách âm thanh từ video sang định dạng .wav hoặc .mp3.
+                  // Vd: mdia audio extract "D:\video.mp4" "D:\audio.mp3"
+
+## image:
+   flip           :Lật hình ảnh theo chiều ngang (input.jpg -> output.jpg).
+
+## media:
+   slice          :Chia nhỏ file media (.wav, .mp3, .mp4) thành các phần theo dung lượng MB chỉ định.
+                  // Vd: mdia media slice "D:\video.mp4" 48
+
+# Example:
+Lệnh `mdia app vid-player` sẽ khởi động ứng dụng Video Player.
+Lệnh `mdia audio extract "input.mp4" "output.wav"` sẽ tách âm thanh từ video sang định dạng WAV.
+===========================================
