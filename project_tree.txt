@@ -1,0 +1,42 @@
+Tree view of: D:\D-Apps\For-Personal\media-studio
+
+├── .gitignore
+├── data
+│   ├── audio
+│   ├── image
+│   └── video
+│       ├── input
+│       │   └── input_video.mp4
+│       └── output
+│           └── output_video.mp4
+├── extract.cmd
+├── ins.cmd
+├── note.md
+├── pler.cmd
+├── print_project_tree.py
+├── print_video_metadata.py
+├── project_tree.txt
+├── requirements.txt
+├── slice.cmd
+└── src
+    ├── apps
+    │   └── video_player
+    │       └── video_player.py
+    ├── configs
+    │   └── configs.json
+    ├── features
+    │   ├── audio
+    │   │   └── extract_audio
+    │   │       └── extract_audio.py
+    │   ├── image
+    │   │   └── image_transformer
+    │   │       └── flip_image.py
+    │   ├── media
+    │   │   └── slice_media.py
+    │   └── video
+    │       └── video_watermark_remover
+    │           ├── clip_2phut_dau.mp4
+    │           ├── clip_2phut_dau_nologo.mp4
+    │           └── video_watermark_remover.py
+    └── utils
+        └── helpers.py

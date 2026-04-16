@@ -1,0 +1,1 @@
+py "src/apps/video_player/video_player.py"

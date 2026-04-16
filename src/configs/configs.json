@@ -1,0 +1,14 @@
+{
+  "videos": [
+    {
+      "input_path": "src/data/media/input/input_video.mp4",
+      "output_path": "src/data/media/output/output_video.mp4",
+      "logo": {
+        "x": 158,
+        "y": 490,
+        "w": 56,
+        "h": 75
+      }
+    }
+  ]
+}
