@@ -29,8 +29,10 @@ media             :Các tính năng xử lý media đa dụng.
    flip           :Lật hình ảnh theo chiều ngang (input.jpg -> output.jpg).
 
 ## media:
-   slice          :Chia nhỏ file media (.wav, .mp3, .mp4) thành các phần theo dung lượng MB chỉ định.
+   slice          :Chia nhỏ file media (.wav, .mp3, .mp4) thành các phần theo dung lượng MB chỉ định. (Lưu vào thư mục riêng kèm timestamp)
                   // Vd: mdia media slice "D:\video.mp4" 48
+   part           :Chia nhỏ file media thành các phần dựa trên thời lượng (vd: 20s, 3m, 3p). (Lưu vào thư mục riêng kèm timestamp)
+                  // Vd: mdia media part "D:\video.mp4" 20s
 
 # Example:
 Lệnh `mdia app vid-player` sẽ khởi động ứng dụng Video Player.

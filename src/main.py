@@ -21,6 +21,7 @@ MDIA_APP_ACTION_VIDEO_PLAYER = "player"
 MDIA_VIDEO_ACTION_RM_LOGO = "rm-logo"
 MDIA_AUDIO_ACTION_EXTRACT = "extract"
 MDIA_MEDIA_ACTION_SLICE = "slice"
+MDIA_MEDIA_ACTION_PART = "part"
 MDIA_IMAGE_ACTION_FLIP = "flip"
 MDIA_GIT_ACTION_COMMIT = "commit"
 
@@ -77,6 +78,17 @@ def run_media_slice(input_path: str, size_mb: str):
 
     script_path = get_script_path("features/media/slice_media.py")
     subprocess.run([sys.executable, script_path, input_path, size_mb])
+    sys.exit(0)
+
+
+def run_media_part(input_path: str, duration: str):
+    if not input_path or not duration:
+        raise Exception(
+            f"{MDIA_WARNING_ACTION_MISSING} - Cần truyền vào 2 tham số: input_path và duration (ví dụ: 20s, 3p)"
+        )
+
+    script_path = get_script_path("features/media/part_media.py")
+    subprocess.run([sys.executable, script_path, input_path, duration])
     sys.exit(0)
 
 
@@ -214,6 +226,8 @@ def main():
         elif cmd_type == MDIA_TYPE_MEDIA:
             if cmd_action == MDIA_MEDIA_ACTION_SLICE:
                 run_media_slice(cmd_value, cmd_extra)
+            elif cmd_action == MDIA_MEDIA_ACTION_PART:
+                run_media_part(cmd_value, cmd_extra)
             elif cmd_action is None:
                 raise Exception(MDIA_WARNING_ACTION_MISSING)
             else:

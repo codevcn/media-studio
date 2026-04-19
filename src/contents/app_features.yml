@@ -58,11 +58,18 @@ mdia_tool:
       description: "Các tính năng xử lý media đa dụng"
       actions:
         - id: "ACTION 05"
-          title: "Cắt nhỏ file media"
+          title: "Cắt nhỏ file media theo dung lượng"
           command: "mdia media slice <input_path> <size_mb>"
-          summary: "Cắt file âm thanh/video dài thành nhiều phần kích thước bằng nhau."
-          details: "Sử dụng FFmpeg stream copy để cắt cực nhanh các loại file như .wav, .mp3, .mp4 theo dung lượng chỉ định mà không encode lại."
+          summary: "Cắt file âm thanh/video dài thành nhiều phần có dung lượng bằng nhau."
+          details: "Sử dụng FFmpeg stream copy để cắt cực nhanh các loại file như .wav, .mp3, .mp4 theo dung lượng (MB) chỉ định mà không encode lại. Các phần nhỏ sẽ được tự động lưu chung vào 1 thư mục với tên theo thời gian cắt."
           conditions: "Tham số input_path và size_mb bắt buộc."
+
+        - id: "ACTION 06"
+          title: "Chia nhỏ file media theo thời gian"
+          command: "mdia media part <input_path> <duration>"
+          summary: "Cắt file âm thanh/video thành nhiều phần nhỏ dựa trên thời lượng (vd: 20s, 3p)."
+          details: "Sử dụng FFmpeg segment muxer với stream copy để chia tệp mà không tái mã hóa. Các phần nhỏ sẽ được tự động lưu vào 1 thư mục riêng biệt kèm theo timestamp hiện tại."
+          conditions: "Tham số input_path và duration bắt buộc."
 
 config:
   ROOT_FOLDER_PATH: "Đường dẫn gốc của dự án mdia-studio."

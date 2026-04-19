@@ -7,6 +7,7 @@ import os
 import sys
 import subprocess
 import json
+import datetime
 
 SUPPORTED_FORMATS = (".wav", ".mp3", ".mp4")
 
@@ -46,7 +47,13 @@ def slice_file(input_file: str, target_size_mb: float) -> None:
 
     target_size_bytes = target_size_mb * 1024 * 1024
     base_name = os.path.splitext(os.path.basename(input_file))[0]
-    output_dir = os.path.dirname(os.path.abspath(input_file))
+    input_dir = os.path.dirname(os.path.abspath(input_file))
+
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    folder_name = f"{base_name}-{timestamp}"
+    output_dir = os.path.join(input_dir, folder_name)
+
+    os.makedirs(output_dir, exist_ok=True)
 
     print(f"[INFO] Input     : {input_file}")
     print(f"[INFO] Format    : {ext}")
