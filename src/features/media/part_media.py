@@ -29,7 +29,7 @@ def parse_duration(duration_str: str) -> float:
             raise ValueError(f"Không thể phân tích giá trị thời gian: '{duration_str}'")
 
 
-def part_media(input_file: str, duration_str: str) -> None:
+def part_media(input_file: str, duration_str: str, limit: int = 0) -> None:
     # --- Validate file tồn tại ---
     if not os.path.isfile(input_file):
         print(f"[ERROR] Không tìm thấy file: {input_file}")
@@ -58,7 +58,7 @@ def part_media(input_file: str, duration_str: str) -> None:
     input_dir = os.path.dirname(os.path.abspath(input_file))
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    folder_name = f"{base_name}-{timestamp}"
+    folder_name = f"{base_name}--part--{timestamp}"
     output_dir = os.path.join(input_dir, folder_name)
 
     os.makedirs(output_dir, exist_ok=True)
@@ -76,20 +76,34 @@ def part_media(input_file: str, duration_str: str) -> None:
         "-y",  # Ghi đè nếu có
         "-i",
         input_file,
-        "-c",
-        "copy",  # Stream copy
-        "-map",
-        "0",  # Map tất cả streams (audio, video, subs)
-        "-f",
-        "segment",
-        "-segment_time",
-        str(duration_sec),
-        "-reset_timestamps",
-        "1",
-        output_pattern,
     ]
 
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    if limit > 0:
+        max_duration = duration_sec * limit
+        cmd.extend(["-t", str(max_duration)])
+        print(
+            f"[INFO] Giới hạn kết quả: {limit} file (Tổng thời lượng: {max_duration}s)"
+        )
+
+    cmd.extend(
+        [
+            "-c",
+            "copy",  # Stream copy
+            "-map",
+            "0",  # Map tất cả streams (audio, video, subs)
+            "-f",
+            "segment",
+            "-segment_time",
+            str(duration_sec),
+            "-reset_timestamps",
+            "1",
+            output_pattern,
+        ]
+    )
+
+    result = subprocess.run(
+        cmd, capture_output=True, text=True, encoding="utf-8", errors="replace"
+    )
     if result.returncode != 0:
         print(f"[ERROR] ffmpeg failed:\n{result.stderr}")
         sys.exit(1)
@@ -104,13 +118,20 @@ def part_media(input_file: str, duration_str: str) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage  : python part_media.py <input_file> <duration_string>")
-        print("Example: python part_media.py video.mp4 20s")
+    if len(sys.argv) < 3:
+        print("Usage  : python part_media.py <input_file> <duration_string> [limit]")
+        print("Example: python part_media.py video.mp4 20s 5")
         print("         python part_media.py audio.mp3 3p")
         sys.exit(1)
 
     input_file = sys.argv[1]
     duration_str = sys.argv[2]
 
-    part_media(input_file, duration_str)
+    limit_val = 0
+    if len(sys.argv) >= 4:
+        try:
+            limit_val = int(sys.argv[3])
+        except ValueError:
+            pass
+
+    part_media(input_file, duration_str, limit_val)

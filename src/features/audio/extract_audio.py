@@ -71,7 +71,13 @@ def extract_audio(input_video_path: str, output_audio_path: str) -> Path:
     ffmpeg_cmd = build_ffmpeg_cmd(input_path, output_path)
 
     try:
-        subprocess.run(ffmpeg_cmd, check=True, capture_output=True, text=True)
+        subprocess.run(
+            ffmpeg_cmd,
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
         print(f"Tách audio thành công: {output_path}")
         return output_path
 

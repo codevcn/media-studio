@@ -29,10 +29,17 @@ mdia_tool:
       actions:
         - id: "ACTION 02"
           title: "Xóa Watermark/Logo"
-          command: "mdia video rm-logo"
-          summary: "Tự động xóa watermark/logo khỏi video."
-          details: "Chạy script `video_watermark_remover.py` sử dụng FFmpeg. Cấu hình vị trí logo hiện tại đang được fix cứng trong script."
-          conditions: "Cần cài đặt FFmpeg."
+          command: "mdia video rm-logo <input_path> <x,y,w,h> [output_path]"
+          summary: "Tự động xóa watermark/logo khỏi video theo tọa độ chỉ định."
+          details: "Chạy script `video_watermark_remover.py` sử dụng FFmpeg. Tọa độ (x,y,w,h) phải được nối bằng dấu phẩy (vd: 24,21,135,44). Tham số output_path là tùy chọn."
+          conditions: "Tham số đầu vào và bộ tọa độ là bắt buộc. Yêu cầu có FFmpeg."
+
+        - id: "ACTION 07"
+          title: "Trích xuất Image Frames"
+          command: "mdia video frames <input_path> <gap_time> [limit]"
+          summary: "Xuất các khung hình từ một video thành hàng loạt ảnh tĩnh (PNG)."
+          details: "Sử dụng FFmpeg để phân tích cú pháp thời gian (gap_time, vd: 5s, 200ms) sang tỉ lệ fps tương ứng và xuất ra ảnh PNG chất lượng cao (lossless) tuần tự. Kết quả lưu tự động."
+          conditions: "Cần tham số input_path và khoảng thời gian (gap_time) giữa các ảnh."
 
     - name: "audio"
       description: "Các tính năng xử lý âm thanh"
@@ -59,16 +66,16 @@ mdia_tool:
       actions:
         - id: "ACTION 05"
           title: "Cắt nhỏ file media theo dung lượng"
-          command: "mdia media slice <input_path> <size_mb>"
-          summary: "Cắt file âm thanh/video dài thành nhiều phần có dung lượng bằng nhau."
-          details: "Sử dụng FFmpeg stream copy để cắt cực nhanh các loại file như .wav, .mp3, .mp4 theo dung lượng (MB) chỉ định mà không encode lại. Các phần nhỏ sẽ được tự động lưu chung vào 1 thư mục với tên theo thời gian cắt."
+          command: "mdia media slice <input_path> <size_mb> [limit]"
+          summary: "Cắt file âm thanh/video dài thành nhiều phần có dung lượng bằng nhau. Có thể giới hạn số lượng phân đoạn đầu ra."
+          details: "Sử dụng FFmpeg stream copy để cắt cực nhanh các loại file như .wav, .mp3, .mp4 theo dung lượng (MB) chỉ định mà không encode lại. Các phần nhỏ sẽ được tự động lưu chung vào 1 thư mục với tên theo thời gian cắt. Tham số cuối cùng 'limit' dùng để giới hạn số file, không giới hạn nếu bỏ trống."
           conditions: "Tham số input_path và size_mb bắt buộc."
 
         - id: "ACTION 06"
           title: "Chia nhỏ file media theo thời gian"
-          command: "mdia media part <input_path> <duration>"
-          summary: "Cắt file âm thanh/video thành nhiều phần nhỏ dựa trên thời lượng (vd: 20s, 3p)."
-          details: "Sử dụng FFmpeg segment muxer với stream copy để chia tệp mà không tái mã hóa. Các phần nhỏ sẽ được tự động lưu vào 1 thư mục riêng biệt kèm theo timestamp hiện tại."
+          command: "mdia media part <input_path> <duration> [limit]"
+          summary: "Cắt file âm thanh/video thành nhiều phần nhỏ dựa trên thời lượng (vd: 20s, 3p). Có thể giới hạn số lượng phân đoạn."
+          details: "Sử dụng FFmpeg segment muxer với stream copy để chia tệp mà không tái mã hóa. Các phần nhỏ sẽ được tự động lưu vào 1 thư mục riêng biệt kèm theo timestamp hiện tại. Tham số 'limit' giúp chống việc tạo ra số lượng file rác quá lớn."
           conditions: "Tham số input_path và duration bắt buộc."
 
 config:

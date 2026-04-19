@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 
 
 class FFmpegLogoRemover:
@@ -58,7 +59,12 @@ class FFmpegLogoRemover:
             # Thực thi câu lệnh và chờ quá trình hoàn tất
             # Đặt capture_output=True để thu thập log, giúp màn hình console gọn gàng hơn
             process = subprocess.run(
-                command, check=True, capture_output=True, text=True
+                command,
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
             )
             print("-" * 50)
             print(f"Hoàn tất! Video đã được xử lý thành công.")
@@ -75,26 +81,44 @@ class FFmpegLogoRemover:
 
 
 def main():
-    # Khai báo đường dẫn tập tin đầu vào và đầu ra
-    # Đảm bảo video clip_2phut_dau.mp4 nằm cùng thư mục với script này
-    input_video = "clip_2phut_dau.mp4"
-    output_video = "clip_2phut_dau_nologo.mp4"
+    if len(sys.argv) < 3:
+        print(
+            "Sử dụng: python video_watermark_remover.py <input_path> <x,y,w,h> [output_path]"
+        )
+        sys.exit(1)
+
+    input_video = sys.argv[1]
+    box_coords = sys.argv[2].split(",")
+
+    if len(box_coords) != 4:
+        print("Lỗi: Tọa độ phải có định dạng x,y,w,h (ví dụ: 24,21,135,44)")
+        sys.exit(1)
+
+    try:
+        x_coord = int(box_coords[0].strip())
+        y_coord = int(box_coords[1].strip())
+        width = int(box_coords[2].strip())
+        height = int(box_coords[3].strip())
+    except ValueError:
+        print("Lỗi: Tọa độ phải là các số nguyên âm.")
+        sys.exit(1)
+
+    if len(sys.argv) >= 4 and sys.argv[3].strip():
+        output_video = sys.argv[3].strip()
+    else:
+        # Default output video name
+        base_name, ext = os.path.splitext(input_video)
+        output_video = f"{base_name}_no-logo{ext}"
 
     try:
         # Khởi tạo công cụ xóa logo
         remover = FFmpegLogoRemover(input_path=input_video, output_path=output_video)
 
-        # Điền các thông số bạn đã đo được ở Bước 1
-        # Thay thế các giá trị bên dưới bằng con số chính xác của bạn
-        x_coord = 24
-        y_coord = 21
-        width = 135
-        height = 44
-
-        print("Bắt đầu tiến trình xóa watermark...")
+        print(
+            f"Bắt đầu tiến trình xóa watermark tại ({x_coord},{y_coord}) kích thước {width}x{height}..."
+        )
 
         # Gọi hàm xóa logo
-        # Bạn có thể giữ nguyên preset="faster" và crf=23 như mặc định của class
         remover.remove_logo(
             x=x_coord, y=y_coord, w=width, h=height, preset="faster", crf=23
         )

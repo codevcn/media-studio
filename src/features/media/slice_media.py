@@ -22,7 +22,14 @@ def get_media_info(input_file: str) -> dict:
         "-show_format",
         input_file,
     ]
-    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        check=True,
+        encoding="utf-8",
+        errors="replace",
+    )
     data = json.loads(result.stdout)
     fmt = data["format"]
     return {
@@ -31,7 +38,7 @@ def get_media_info(input_file: str) -> dict:
     }
 
 
-def slice_file(input_file: str, target_size_mb: float) -> None:
+def slice_file(input_file: str, target_size_mb: float, limit: int = 0) -> None:
     # --- Validate file tồn tại ---
     if not os.path.isfile(input_file):
         print(f"[ERROR] File not found: {input_file}")
@@ -50,7 +57,7 @@ def slice_file(input_file: str, target_size_mb: float) -> None:
     input_dir = os.path.dirname(os.path.abspath(input_file))
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    folder_name = f"{base_name}-{timestamp}"
+    folder_name = f"{base_name}--slice--{timestamp}"
     output_dir = os.path.join(input_dir, folder_name)
 
     os.makedirs(output_dir, exist_ok=True)
@@ -81,6 +88,10 @@ def slice_file(input_file: str, target_size_mb: float) -> None:
     output_files = []
 
     while start < total_duration:
+        if limit > 0 and part > limit:
+            print(f"[INFO] Đã đạt giới hạn số lượng file ({limit}). Dừng cắt.")
+            break
+
         duration = min(chunk_duration, total_duration - start)
         output_file = os.path.join(output_dir, f"{base_name}_part{part:03d}{ext}")
 
@@ -101,7 +112,9 @@ def slice_file(input_file: str, target_size_mb: float) -> None:
             output_file,
         ]
 
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, encoding="utf-8", errors="replace"
+        )
         if result.returncode != 0:
             print(f"[ERROR] ffmpeg failed on part {part}:\n{result.stderr}")
             sys.exit(1)
@@ -119,9 +132,9 @@ def slice_file(input_file: str, target_size_mb: float) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage  : python slice_audio.py <input_file> <size_mb>")
-        print("Example: python slice_audio.py audio.wav 48")
+    if len(sys.argv) < 3:
+        print("Usage  : python slice_media.py <input_file> <size_mb> [limit]")
+        print("Example: python slice_media.py audio.wav 48 5")
         print(f"Formats: {', '.join(SUPPORTED_FORMATS)}")
         sys.exit(1)
 
@@ -135,4 +148,11 @@ if __name__ == "__main__":
         print("[ERROR] <size_mb> must be a positive number.")
         sys.exit(1)
 
-    slice_file(input_file, size_mb)
+    limit_val = 0
+    if len(sys.argv) >= 4:
+        try:
+            limit_val = int(sys.argv[3])
+        except ValueError:
+            pass
+
+    slice_file(input_file, size_mb, limit_val)
