@@ -2,7 +2,7 @@
 # Media Studio CLI Help
 ===========================================
 # Usage:
-mdia [[-h | --help] | <type> <action> [<value> [<extra>]]]
+mda [[-h | --help] | <type> <action> [<value> [<extra>]]]
 
 # Available flags:
 -h, --help        :print this help.
@@ -20,24 +20,24 @@ media             :Các tính năng xử lý media đa dụng.
 
 ## video:
    rm-logo        :Xóa watermark/logo khỏi video tại vùng tọa độ x,y,w,h chỉ định.
-                  // Vd: mdia video rm-logo "D:\video.mp4" "24,21,135,44"
+                  // Vd: mda video rm-logo "D:\video.mp4" "24,21,135,44"
    frames         :Trích xuất khung hình video ra ảnh PNG với khoảng thời gian giãn cách (vd: 5s, 200ms, 2m). (Lưu vào thư mục riêng kèm timestamp)
-                  // Vd: mdia video frames "D:\video.mp4" 5s 50
+                  // Vd: mda video frames "D:\video.mp4" 5s 50
 
 ## audio:
    extract        :Tách âm thanh từ video sang định dạng .wav hoặc .mp3.
-                  // Vd: mdia audio extract "D:\video.mp4" "D:\audio.mp3"
+                  // Vd: mda audio extract "D:\video.mp4" "D:\audio.mp3"
 
 ## image:
    flip           :Lật hình ảnh theo chiều ngang (input.jpg -> output.jpg).
 
 ## media:
-   slice          :Chia nhỏ file media (.wav, .mp3, .mp4) thành các phần theo dung lượng MB chỉ định. Tùy chọn [limit] số phần đầu ra. (Lưu vào thư mục riêng kèm timestamp)
-                  // Vd: mdia media slice "D:\video.mp4" 48 5
-   part           :Chia nhỏ file media thành các phần dựa trên thời lượng (vd: 20s, 3m, 3p). Tùy chọn [limit] số phần đầu ra. (Lưu vào thư mục riêng kèm timestamp)
-                  // Vd: mdia media part "D:\video.mp4" 20s 5
+   part-size      :Chia nhỏ file media (.wav, .mp3, .mp4) thành các phần theo dung lượng MB chỉ định. Tùy chọn [limit] số phần đầu ra. (Lưu vào thư mục riêng kèm timestamp)
+                  // Vd: mda media part-size "D:\video.mp4" 48 5
+   part-time      :Chia nhỏ file media thành các phần dựa trên thời lượng (vd: 20s, 3m, 3p). Tùy chọn [limit] số phần đầu ra. (Lưu vào thư mục riêng kèm timestamp)
+                  // Vd: mda media part-time "D:\video.mp4" 20s 5
 
 # Example:
-Lệnh `mdia app vid-player` sẽ khởi động ứng dụng Video Player.
-Lệnh `mdia audio extract "input.mp4" "output.wav"` sẽ tách âm thanh từ video sang định dạng WAV.
+Lệnh `mda app player` sẽ khởi động ứng dụng Video Player.
+Lệnh `mda audio extract "input.mp4" "output.wav"` sẽ tách âm thanh từ video sang định dạng WAV.
 ===========================================

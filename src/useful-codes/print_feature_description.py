@@ -41,9 +41,9 @@ def print_feature_description(cmd_type: str, cmd_action: str):
 
                 # Check nếu action khớp pattern
                 if cmd_action:
-                    match_str = f"mdia {cmd_type} {cmd_action}"
+                    match_str = f"mda {cmd_type} {cmd_action}"
                 else:
-                    match_str = f"mdia {cmd_type}"
+                    match_str = f"mda {cmd_type}"
 
                 if match_str in command_str:
                     if hasattr(sys.stdout, "reconfigure"):
@@ -52,10 +52,11 @@ def print_feature_description(cmd_type: str, cmd_action: str):
                         "=================================================================="
                     )
                     print(f"[{action.get('id')}] {action.get('title')}")
-                    print(f"Lệnh    : {action.get('command')}")
-                    print(f"Tóm tắt : {action.get('summary')}")
-                    print(f"Chi tiết: {action.get('details')}")
-                    print(f"Yêu cầu : {action.get('conditions')}")
+                    print(f"Lệnh      : {action.get('command')}")
+                    print(f"Tóm tắt   : {action.get('summary')}")
+                    print(f"Chi tiết  : {action.get('details')}")
+                    print(f"Tham số   : {action.get('parameters', 'Không có')}")
+                    print(f"Yêu cầu   : {action.get('conditions')}")
                     print(
                         "=================================================================="
                     )
