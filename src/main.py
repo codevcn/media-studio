@@ -24,6 +24,7 @@ MDIA_VIDEO_ACTION_FRAMES = "frames"
 MDIA_AUDIO_ACTION_EXTRACT = "extract"
 MDIA_MEDIA_ACTION_PART_BY_SIZE = "part-size"
 MDIA_MEDIA_ACTION_PART_BY_TIME = "part-time"
+MDIA_MEDIA_ACTION_SLICE = "slice"
 MDIA_IMAGE_ACTION_FLIP = "flip"
 MDIA_GIT_ACTION_COMMIT = "commit"
 
@@ -110,6 +111,20 @@ def run_media_part_by_size(input_path: str, size_mb: str, limit=None):
     cmd = [sys.executable, script_path, input_path, size_mb]
     if limit:
         cmd.append(limit)
+    subprocess.run(cmd)
+    sys.exit(0)
+
+
+def run_media_slice(input_path: str, time_range: str, output_filename=None):
+    if not input_path or not time_range:
+        raise Exception(
+            f"{MDIA_WARNING_ACTION_MISSING} - Cần truyền ít nhất 2 tham số: input_path và time_range (vd: 00:10-01:22)"
+        )
+
+    script_path = get_script_path("features/media/slice_media.py")
+    cmd = [sys.executable, script_path, input_path, time_range]
+    if output_filename:
+        cmd.append(output_filename)
     subprocess.run(cmd)
     sys.exit(0)
 
@@ -286,7 +301,9 @@ def main():
         # Dispatcher cho nhóm MEDIA
         # -------------------------------------------------------------
         elif cmd_type == MDIA_TYPE_MEDIA:
-            if cmd_action == MDIA_MEDIA_ACTION_PART_BY_SIZE:
+            if cmd_action == MDIA_MEDIA_ACTION_SLICE:
+                run_media_slice(cmd_value, cmd_extra, cmd_limit)
+            elif cmd_action == MDIA_MEDIA_ACTION_PART_BY_SIZE:
                 run_media_part_by_size(cmd_value, cmd_extra, cmd_limit)
             elif cmd_action == MDIA_MEDIA_ACTION_PART_BY_TIME:
                 run_media_part_by_time(cmd_value, cmd_extra, cmd_limit)

@@ -61,21 +61,6 @@ mdia_tool:
       actions:
         - id: "ACTION 04"
           title: "Lật ảnh"
-          command: "mda image flip"
-          summary: "Lật phương ngang đối với thư mục ảnh đầu vào."
-          details: "Chạy script `flip_image.py`. Hiện tại config đang hardcoded từ `input.jpg` chạy ra `output.jpg`."
-          conditions: "Cần cài đặt thư viện PIL (Pillow)."
-          parameters: "Không có tham số."
-
-    - name: "media"
-      description: "Các tính năng xử lý media đa dụng"
-      actions:
-        - id: "ACTION 05"
-          title: "Cắt nhỏ file media theo dung lượng"
-          command: "mda media part-size <input_path> <size_mb> [limit]"
-          summary: "Cắt file âm thanh/video dài thành nhiều phần có dung lượng bằng nhau. Có thể giới hạn số lượng phân đoạn đầu ra."
-          details: "Sử dụng FFmpeg stream copy để cắt cực nhanh các loại file như .wav, .mp3, .mp4 theo dung lượng (MB) chỉ định mà không encode lại. Các phần nhỏ sẽ được tự động lưu chung vào 1 thư mục với tên theo thời gian cắt. Tham số cuối cùng 'limit' dùng để giới hạn số file, không giới hạn nếu bỏ trống."
-          conditions: "Tham số input_path và size_mb bắt buộc."
           parameters: "<input_path>: File media đầu vào. <size_mb>: Kích thước (MB). [limit]: Giới hạn số lượng cắt."
 
         - id: "ACTION 06"

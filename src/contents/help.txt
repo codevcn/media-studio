@@ -33,6 +33,8 @@ dld               :Các tính năng tải xuống từ mạng xã hội (Downloa
    flip           :Lật hình ảnh theo chiều ngang (input.jpg -> output.jpg).
 
 ## media:
+   slice          :Cắt một đoạn từ media tại khoảng thời gian cho trước (vd: 00:10-01:22). Tùy chọn [output_filename] để chỉ định tên file xuất.
+                  // Vd: mda media slice "D:\video.mp4" 00:10-01:22 "clip1"
    part-size      :Chia nhỏ file media (.wav, .mp3, .mp4) thành các phần theo dung lượng MB chỉ định. Tùy chọn [limit] số phần đầu ra. (Lưu vào thư mục riêng kèm timestamp)
                   // Vd: mda media part-size "D:\video.mp4" 48 5
    part-time      :Chia nhỏ file media thành các phần dựa trên thời lượng (vd: 20s, 3m, 3p). Tùy chọn [limit] số phần đầu ra. (Lưu vào thư mục riêng kèm timestamp)
