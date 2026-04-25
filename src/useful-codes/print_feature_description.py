@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 from dotenv import load_dotenv
+import yaml
 
 load_dotenv(dotenv_path="D:/D-Documents/TOOLs/media-studio/.env")
 
@@ -19,14 +20,6 @@ def print_feature_description(cmd_type: str, cmd_action: str):
     yml_path = get_script_path("contents/app_features.yml")
     if not os.path.exists(yml_path):
         print(f">>> Warn: Không tìm thấy file {yml_path}")
-        sys.exit(1)
-
-    try:
-        import yaml
-    except ImportError:
-        print(
-            ">>> Warn: Yêu cầu cài đặt thư viện 'PyYAML' (pip install PyYAML) để dùng --des"
-        )
         sys.exit(1)
 
     with open(yml_path, "r", encoding="utf-8") as f:

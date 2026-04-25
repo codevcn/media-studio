@@ -15,6 +15,7 @@ MDIA_TYPE_MEDIA = "media"
 MDIA_TYPE_APP = "app"
 MDIA_TYPE_OPEN = "open"
 MDIA_TYPE_GIT = "git"
+MDIA_TYPE_DLD = "dld"
 
 # Actions
 MDIA_APP_ACTION_VIDEO_PLAYER = "player"
@@ -25,6 +26,12 @@ MDIA_MEDIA_ACTION_PART_BY_SIZE = "part-size"
 MDIA_MEDIA_ACTION_PART_BY_TIME = "part-time"
 MDIA_IMAGE_ACTION_FLIP = "flip"
 MDIA_GIT_ACTION_COMMIT = "commit"
+
+MDIA_DLD_ACTION_YTB = "ytb"
+MDIA_DLD_ACTION_YTB_MUSIC = "ytb-music"
+MDIA_DLD_ACTION_FB = "fb"
+MDIA_DLD_ACTION_INSTA = "insta"
+MDIA_DLD_ACTION_TIKTOK = "tiktok"
 
 # Warnings
 MDIA_WARNING_TYPE_WRONG = "WRONG-TYPE"
@@ -127,6 +134,25 @@ def run_image_flip():
     sys.exit(0)
 
 
+def run_downloader(platform: str, url: str, option: str, filename: str, folder: str, format_ext: str):
+    if not url or not option:
+        raise Exception(
+            f"{MDIA_WARNING_ACTION_MISSING} - Cần truyền URL và option (best-vid, good-vid, audio, sub)"
+        )
+
+    script_path = get_script_path("features/downloader/run_downloader.py")
+    cmd = [sys.executable, script_path, platform, url, option]
+    if filename:
+        cmd.extend(["--filename", filename])
+    if folder:
+        cmd.extend(["--folder", folder])
+    if format_ext:
+        cmd.extend(["--format", format_ext])
+    
+    subprocess.run(cmd)
+    sys.exit(0)
+
+
 # --- Khối Dispatcher (__main__) ---
 def print_help():
     help_path = get_script_path("contents/help.txt")
@@ -167,7 +193,7 @@ def main():
     parser.add_argument(
         "type",
         nargs="?",
-        help="Loại lệnh: app | audio | video | image | media | open | git",
+        help="Loại lệnh: app | audio | video | image | media | open | git | dld",
     )
     parser.add_argument(
         "action",
@@ -189,6 +215,9 @@ def main():
         type=str,
         help="Truyền message cho script phụ (dùng cho git commit)",
     )
+    parser.add_argument("--filename", type=str, help="Chỉ định tên file (dùng cho module dld)")
+    parser.add_argument("--folder", type=str, help="Chỉ định thư mục đích (dùng cho module dld)")
+    parser.add_argument("--format", type=str, help="Chỉ định định dạng đầu ra (dùng cho module dld)")
 
     args = parser.parse_args()
 
@@ -289,6 +318,24 @@ def main():
         elif cmd_type == MDIA_TYPE_IMAGE:
             if cmd_action == MDIA_IMAGE_ACTION_FLIP:
                 run_image_flip()
+            elif cmd_action is None:
+                raise Exception(MDIA_WARNING_ACTION_MISSING)
+            else:
+                raise Exception(MDIA_WARNING_ACTION_WRONG)
+
+        # -------------------------------------------------------------
+        # Dispatcher cho nhóm DLD (Downloader)
+        # -------------------------------------------------------------
+        elif cmd_type == MDIA_TYPE_DLD:
+            valid_actions = [
+                MDIA_DLD_ACTION_YTB,
+                MDIA_DLD_ACTION_YTB_MUSIC,
+                MDIA_DLD_ACTION_FB,
+                MDIA_DLD_ACTION_INSTA,
+                MDIA_DLD_ACTION_TIKTOK,
+            ]
+            if cmd_action in valid_actions:
+                run_downloader(cmd_action, cmd_value, cmd_extra, args.filename, args.folder, args.format)
             elif cmd_action is None:
                 raise Exception(MDIA_WARNING_ACTION_MISSING)
             else:

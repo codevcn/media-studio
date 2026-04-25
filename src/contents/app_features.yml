@@ -97,5 +97,16 @@ mdia_tool:
           conditions: "Yêu cầu phải có tham số `-m '<thông điệp>'` hoặc `--message '<thông điệp>'`."
           parameters: "-m / --message: Tham số bắt buộc, thông điệp đăng tải commit."
 
+    - name: "dld"
+      description: "Các tính năng tải xuống Media (Downloader)"
+      actions:
+        - id: "ACTION 09"
+          title: "Tải Video / Audio từ mạng xã hội"
+          command: "mda dld <platform> <url> <option> [--filename] [--folder] [--format]"
+          summary: "Tải video, audio hoặc phụ đề từ YouTube, Facebook, Instagram, TikTok bằng yt-dlp."
+          details: "Module downloader đa nền tảng. Hỗ trợ các nền tảng: ytb, ytb-music, fb, insta, tiktok với các tùy chọn tải chất lượng tốt nhất, trung bình, tách âm thanh mp3 hoặc lưu phụ đề SRT. Hỗ trợ thêm tham số --format để chỉ định định dạng đầu ra (mp4, mkv, mp3, wav...)."
+          conditions: "Yêu cầu thư viện yt-dlp. URL phải hợp lệ và public."
+          parameters: "<platform>: ytb | ytb-music | fb | insta | tiktok. <url>: Đường dẫn video. <option>: best-vid | good-vid | audio | sub. [--filename]: Tên file. [--folder]: Thư mục đích. [--format]: Định dạng đích (mp4, mkv, mp3, wav...)"
+
 config:
   ROOT_FOLDER_PATH: "Đường dẫn gốc của dự án mdia-studio."

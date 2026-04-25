@@ -13,6 +13,7 @@ video             :Các tính năng xử lý video.
 audio             :Các tính năng xử lý âm thanh.
 image             :Các tính năng xử lý hình ảnh.
 media             :Các tính năng xử lý media đa dụng.
+dld               :Các tính năng tải xuống từ mạng xã hội (Downloader).
 
 # Available actions:
 ## app:
@@ -36,6 +37,10 @@ media             :Các tính năng xử lý media đa dụng.
                   // Vd: mda media part-size "D:\video.mp4" 48 5
    part-time      :Chia nhỏ file media thành các phần dựa trên thời lượng (vd: 20s, 3m, 3p). Tùy chọn [limit] số phần đầu ra. (Lưu vào thư mục riêng kèm timestamp)
                   // Vd: mda media part-time "D:\video.mp4" 20s 5
+
+## dld:
+   ytb, ytb-music, fb, insta, tiktok   :Tải nội dung từ các nền tảng tương ứng bằng yt-dlp. Hỗ trợ các option: best-vid, good-vid, audio, sub.
+                  // Vd: mda dld ytb "https://youtube.com/..." good-vid --filename "my_video" --folder "C:\Downloads" --format "mp4"
 
 # Example:
 Lệnh `mda app player` sẽ khởi động ứng dụng Video Player.
