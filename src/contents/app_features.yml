@@ -94,11 +94,11 @@ mdia_tool:
       actions:
         - id: "ACTION 09"
           title: "Tải Video / Audio từ mạng xã hội"
-          command: "mda dld <platform> <url> [option] [--filename] [--folder] [--format] [--threads]"
+          command: "mda dld <platform> <url> [option] [--filename] [--folder] [--format] [--threads] [--cookies | --cookies-from-browser]"
           summary: "Tải video, audio hoặc phụ đề từ YouTube, Facebook, Instagram, TikTok, Douyin, Bilibili bằng yt-dlp."
-          details: "Module downloader đa nền tảng. Hỗ trợ các nền tảng: ytb, ytb-music, fb, insta, tiktok, douyin, bilibili với các tùy chọn tải chất lượng tốt nhất, trung bình, tách âm thanh mp3 hoặc lưu phụ đề SRT. Nếu không truyền option sau URL, mặc định dùng good-vid. Media download được tăng tốc bằng aria2 qua yt-dlp external downloader. Hỗ trợ thêm tham số --format để chỉ định định dạng đầu ra (mp4, mkv, mp3, wav...) và --threads để chỉ định số luồng tải song song của aria2."
+          details: "Module downloader đa nền tảng. Hỗ trợ các nền tảng: ytb, ytb-music, fb, insta, tiktok, douyin, bilibili với các tùy chọn tải chất lượng tốt nhất, trung bình, tách âm thanh mp3 hoặc lưu phụ đề SRT. Nếu không truyền option sau URL, mặc định dùng good-vid. Media download được tăng tốc bằng aria2 qua yt-dlp external downloader. Hỗ trợ thêm tham số --format để chỉ định định dạng đầu ra (mp4, mkv, mp3, wav...), --threads để chỉ định số luồng tải song song của aria2, và --cookies/--cookies-from-browser cho các nền tảng yêu cầu cookie mới. Riêng Douyin sẽ tự thử cookies từ chrome, edge, firefox nếu không truyền cookie thủ công."
           conditions: "Yêu cầu thư viện yt-dlp và phần mềm aria2 có lệnh aria2c trong PATH. URL phải hợp lệ và public."
-          parameters: "<platform>: ytb | ytb-music | fb | insta | tiktok | douyin | bilibili | bili | bilili. <url>: Đường dẫn video. [option]: best-vid | good-vid | audio | sub, mặc định good-vid. [--filename]: Tên file, mặc định theo tiêu đề media. [--folder]: Thư mục đích, mặc định thư mục đang chạy lệnh. [--format]: Định dạng đích (mp4, mkv, mp3, wav...), mặc định theo yt-dlp hoặc theo option. [--threads] / [--aria2-threads]: Số luồng tải song song của aria2, mặc định 4."
+          parameters: "<platform>: ytb | ytb-music | fb | insta | tiktok | douyin | bilibili | bili | bilili. <url>: Đường dẫn video. [option]: best-vid | good-vid | audio | sub, mặc định good-vid. [--filename]: Tên file, mặc định theo tiêu đề media. [--folder]: Thư mục đích, mặc định thư mục đang chạy lệnh. [--format]: Định dạng đích (mp4, mkv, mp3, wav...), mặc định theo yt-dlp hoặc theo option. [--threads] / [--aria2-threads]: Số luồng tải song song của aria2, mặc định 4. [--cookies]: Đường dẫn file cookies Netscape. [--cookies-from-browser]: Lấy cookies từ browser, ví dụ chrome, edge, firefox."
 
 config:
   ROOT_FOLDER_PATH: "Đường dẫn gốc của dự án mdia-studio."

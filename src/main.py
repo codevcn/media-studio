@@ -187,6 +187,8 @@ def run_downloader(
     folder: str,
     format_ext: str,
     threads: int,
+    cookies: str,
+    cookies_from_browser: str,
 ):
     if not url:
         raise Exception(
@@ -196,6 +198,8 @@ def run_downloader(
     option = option or MDIA_DLD_DEFAULT_OPTION
     if threads < 1:
         raise Exception("--threads phải là số nguyên >= 1")
+    if cookies and cookies_from_browser:
+        raise Exception("Chỉ dùng một trong hai flag: --cookies hoặc --cookies-from-browser")
 
     script_path = get_script_path("features/downloader/run_downloader.py")
     cmd = [sys.executable, script_path, platform, url, option]
@@ -206,6 +210,10 @@ def run_downloader(
     if format_ext:
         cmd.extend(["--format", format_ext])
     cmd.extend(["--threads", str(threads)])
+    if cookies:
+        cmd.extend(["--cookies", cookies])
+    if cookies_from_browser:
+        cmd.extend(["--cookies-from-browser", cookies_from_browser])
 
     subprocess.run(cmd)
     sys.exit(0)
@@ -314,6 +322,16 @@ def main():
         type=int,
         default=MDIA_DLD_DEFAULT_THREADS,
         help=f"Số luồng tải song song cho aria2 (dùng cho module dld, mặc định {MDIA_DLD_DEFAULT_THREADS})",
+    )
+    parser.add_argument(
+        "--cookies",
+        type=str,
+        help="Đường dẫn file cookies Netscape dùng cho module dld",
+    )
+    parser.add_argument(
+        "--cookies-from-browser",
+        type=str,
+        help="Lấy cookies từ browser cho module dld (vd: chrome, edge, firefox)",
     )
 
     args = parser.parse_args()
@@ -449,6 +467,8 @@ def main():
                     args.folder,
                     args.format,
                     args.threads,
+                    args.cookies,
+                    args.cookies_from_browser,
                 )
             elif cmd_action is None:
                 raise Exception(MDIA_WARNING_ACTION_MISSING)

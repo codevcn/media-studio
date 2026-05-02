@@ -30,6 +30,7 @@ Media Studio là một tập hợp các công cụ dòng lệnh (CLI) và ứng 
 - Cung cấp tùy chọn tải linh hoạt: chất lượng cao nhất (`best-vid`), chất lượng khá (`good-vid`), chỉ âm thanh (`audio`), hoặc chỉ tải phụ đề (`sub`).
 - Nếu không truyền tùy chọn sau URL, mặc định dùng `good-vid`; vẫn hỗ trợ tuỳ chỉnh tên file (`--filename`) và thư mục đích (`--folder`).
 - Tăng tốc tải bằng `aria2c`; dùng `--threads` hoặc `--aria2-threads` để chỉnh số luồng tải song song, mặc định là `4`.
+- Hỗ trợ cookie cho các nền tảng yêu cầu xác minh qua `--cookies-from-browser chrome|edge|firefox` hoặc `--cookies <cookies.txt>`; riêng Douyin sẽ tự thử cookies từ `chrome`, `edge`, `firefox` nếu bạn không truyền cookie thủ công.
 
 ### 6. Tiện ích Phụ Trợ
 
