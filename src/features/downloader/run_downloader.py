@@ -8,7 +8,12 @@ from platform_downloaders import (
     FacebookDownloader,
     InstagramDownloader,
     TiktokDownloader,
+    DouyinDownloader,
+    BilibiliDownloader,
 )
+
+DEFAULT_DOWNLOAD_OPTION = "good-vid"
+DEFAULT_ARIA2_THREADS = 4
 
 
 def main():
@@ -19,15 +24,28 @@ def main():
 
     parser = argparse.ArgumentParser(description="Media Studio Downloader Module")
     parser.add_argument(
-        "platform", type=str, help="Nền tảng (ytb, ytb-music, fb, insta, tiktok)"
+        "platform",
+        type=str,
+        help="Nền tảng (ytb, ytb-music, fb, insta, tiktok, douyin, bilibili, bili, bilili)",
     )
     parser.add_argument("url", type=str, help="URL video cần tải")
     parser.add_argument(
-        "option", type=str, help="Tùy chọn tải: best-vid, good-vid, audio, sub"
+        "option",
+        nargs="?",
+        default=DEFAULT_DOWNLOAD_OPTION,
+        help=f"Tùy chọn tải: best-vid, good-vid, audio, sub (mặc định: {DEFAULT_DOWNLOAD_OPTION})",
     )
     parser.add_argument("--filename", type=str, default=None, help="Tên file đầu ra")
     parser.add_argument("--folder", type=str, default=None, help="Thư mục lưu trữ")
     parser.add_argument("--format", type=str, default=None, help="Định dạng file tải xuống (mp4, mp3, wav...)")
+    parser.add_argument(
+        "--threads",
+        "--aria2-threads",
+        dest="threads",
+        type=int,
+        default=DEFAULT_ARIA2_THREADS,
+        help=f"Số luồng tải song song cho aria2 (mặc định: {DEFAULT_ARIA2_THREADS})",
+    )
 
     args = parser.parse_args()
 
@@ -37,6 +55,11 @@ def main():
     filename = args.filename
     folder = args.folder
     format_ext = args.format
+    threads = args.threads
+
+    if threads < 1:
+        print(">>> Lỗi: --threads phải là số nguyên >= 1.")
+        sys.exit(1)
 
     # Map platform code tới các Class tương ứng
     downloaders_map = {
@@ -45,6 +68,10 @@ def main():
         "fb": FacebookDownloader,
         "insta": InstagramDownloader,
         "tiktok": TiktokDownloader,
+        "douyin": DouyinDownloader,
+        "bilibili": BilibiliDownloader,
+        "bili": BilibiliDownloader,
+        "bilili": BilibiliDownloader,
     }
 
     if platform not in downloaders_map:
@@ -54,7 +81,7 @@ def main():
 
     # Khởi tạo class downloader
     DownloaderClass = downloaders_map[platform]
-    downloader = DownloaderClass(url, option, filename, folder, format_ext)
+    downloader = DownloaderClass(url, option, filename, folder, format_ext, threads)
 
     # Thực thi tải
     downloader.download()

@@ -26,6 +26,8 @@ MDIA_MEDIA_ACTION_PART_BY_SIZE = "part-size"
 MDIA_MEDIA_ACTION_PART_BY_TIME = "part-time"
 MDIA_MEDIA_ACTION_SLICE = "slice"
 MDIA_IMAGE_ACTION_FLIP = "flip"
+MDIA_IMAGE_FLIP_HORIZONTAL = "horizontal"
+MDIA_IMAGE_FLIP_VERTICAL = "vertical"
 MDIA_GIT_ACTION_COMMIT = "commit"
 
 MDIA_DLD_ACTION_YTB = "ytb"
@@ -33,6 +35,12 @@ MDIA_DLD_ACTION_YTB_MUSIC = "ytb-music"
 MDIA_DLD_ACTION_FB = "fb"
 MDIA_DLD_ACTION_INSTA = "insta"
 MDIA_DLD_ACTION_TIKTOK = "tiktok"
+MDIA_DLD_ACTION_DOUYIN = "douyin"
+MDIA_DLD_ACTION_BILIBILI = "bilibili"
+MDIA_DLD_ACTION_BILI = "bili"
+MDIA_DLD_ACTION_BILILI = "bilili"
+MDIA_DLD_DEFAULT_OPTION = "good-vid"
+MDIA_DLD_DEFAULT_THREADS = 4
 
 # Warnings
 MDIA_WARNING_TYPE_WRONG = "WRONG-TYPE"
@@ -42,6 +50,9 @@ MDIA_WARNING_ACTION_MISSING = "MISSING-ACTION"
 MDIA_WARNING_FLAG_MISSING = "MISSING-FLAG"
 
 ROOT_FOLDER_PATH = os.getenv("ROOT_FOLDER_PATH") or ""
+CONTENTS_FOLDER_PATH = os.getenv("CONTENTS_FOLDER_PATH") or os.path.join(
+    ROOT_FOLDER_PATH, "src", "contents"
+)
 
 
 # --- Helper Functions ---
@@ -50,9 +61,20 @@ def get_script_path(relative_path: str) -> str:
     return os.path.join(ROOT_FOLDER_PATH, "src", relative_path)
 
 
+def get_content_path(filename: str) -> str:
+    return os.path.join(CONTENTS_FOLDER_PATH, filename)
+
+
 def warn_user_error(warning_message: str):
     """In cảnh báo lỗi và kết thúc chương trình"""
     print(f">>> Warn: {warning_message}")
+
+
+def ensure_utf8_stdout():
+    """Cấu hình stdout UTF-8 để in tiếng Việt ổn định trên Windows."""
+    if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8")
 
 
 # --- Handlers ---
@@ -143,17 +165,37 @@ def run_media_part_by_time(input_path: str, duration: str, limit=None):
     sys.exit(0)
 
 
-def run_image_flip():
+def run_image_flip(input_path: str, direction: str, output_path=None):
+    if not input_path or not direction:
+        raise Exception(
+            f"{MDIA_WARNING_ACTION_MISSING} - Cần truyền input_path absolute và hướng lật ({MDIA_IMAGE_FLIP_HORIZONTAL} hoặc {MDIA_IMAGE_FLIP_VERTICAL})"
+        )
+
     script_path = get_script_path("features/image/flip_image.py")
-    subprocess.run([sys.executable, script_path])
+    cmd = [sys.executable, script_path, input_path, direction]
+    if output_path:
+        cmd.append(output_path)
+    subprocess.run(cmd)
     sys.exit(0)
 
 
-def run_downloader(platform: str, url: str, option: str, filename: str, folder: str, format_ext: str):
-    if not url or not option:
+def run_downloader(
+    platform: str,
+    url: str,
+    option: str,
+    filename: str,
+    folder: str,
+    format_ext: str,
+    threads: int,
+):
+    if not url:
         raise Exception(
-            f"{MDIA_WARNING_ACTION_MISSING} - Cần truyền URL và option (best-vid, good-vid, audio, sub)"
+            f"{MDIA_WARNING_ACTION_MISSING} - Cần truyền URL. Option mặc định là {MDIA_DLD_DEFAULT_OPTION}."
         )
+
+    option = option or MDIA_DLD_DEFAULT_OPTION
+    if threads < 1:
+        raise Exception("--threads phải là số nguyên >= 1")
 
     script_path = get_script_path("features/downloader/run_downloader.py")
     cmd = [sys.executable, script_path, platform, url, option]
@@ -163,14 +205,15 @@ def run_downloader(platform: str, url: str, option: str, filename: str, folder: 
         cmd.extend(["--folder", folder])
     if format_ext:
         cmd.extend(["--format", format_ext])
-    
+    cmd.extend(["--threads", str(threads)])
+
     subprocess.run(cmd)
     sys.exit(0)
 
 
 # --- Khối Dispatcher (__main__) ---
 def print_help():
-    help_path = get_script_path("contents/help.txt")
+    help_path = get_content_path("help.txt")
     if os.path.exists(help_path):
         with open(help_path, "r", encoding="utf-8") as f:
             print(f.read())
@@ -182,6 +225,23 @@ def open_this_project_in_IDE(args):
     ide_prefix = "anti" if args.anti else "code"
     command_str = f'{ide_prefix} "{ROOT_FOLDER_PATH}"'
     subprocess.run(command_str, shell=True)
+    sys.exit(0)
+
+
+def open_this_project_in_system_folder():
+    folder_path = (
+        ROOT_FOLDER_PATH
+        if ROOT_FOLDER_PATH
+        else os.path.dirname(os.path.abspath(__file__))
+    )
+
+    # Sử dụng os.startfile (cách chuẩn nhất trên Windows để mở thư mục/file bằng app mặc định)
+    if hasattr(os, "startfile"):
+        os.startfile(folder_path)
+    else:
+        # Dự phòng gọi thẳng explorer
+        subprocess.run(["explorer", os.path.normpath(folder_path)])
+
     sys.exit(0)
 
 
@@ -197,6 +257,8 @@ def run_git_commit_and_push(message: str):
 
 
 def main():
+    ensure_utf8_stdout()
+
     if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
         print_help()
         sys.exit(0)
@@ -213,13 +275,19 @@ def main():
     parser.add_argument(
         "action",
         nargs="?",
-        help="Hành động (ví dụ: vid-player, rm-logo, extract, slice, flip, commit)",
+        help="Hành động (ví dụ: vid-player, rm-logo, extract, slice, flip, commit) hoặc nền tảng download",
     )
     parser.add_argument("value", nargs="?", help="Giá trị thứ nhất")
     parser.add_argument("extra", nargs="?", help="Giá trị thứ hai")
     parser.add_argument("limit", nargs="?", help="Giới hạn số lượng (optional)")
     parser.add_argument(
         "-a", "--anti", action="store_true", help="Dùng Antigravity IDE thay vì VSCode"
+    )
+    parser.add_argument(
+        "-f",
+        "--file_explorer",
+        action="store_true",
+        help="Mở thư mục dự án trong File Explorer",
     )
     parser.add_argument(
         "--des", action="store_true", help="Hiện mô tả chi tiết của lệnh"
@@ -230,9 +298,23 @@ def main():
         type=str,
         help="Truyền message cho script phụ (dùng cho git commit)",
     )
-    parser.add_argument("--filename", type=str, help="Chỉ định tên file (dùng cho module dld)")
-    parser.add_argument("--folder", type=str, help="Chỉ định thư mục đích (dùng cho module dld)")
-    parser.add_argument("--format", type=str, help="Chỉ định định dạng đầu ra (dùng cho module dld)")
+    parser.add_argument(
+        "--filename", type=str, help="Chỉ định tên file (dùng cho module dld)"
+    )
+    parser.add_argument(
+        "--folder", type=str, help="Chỉ định thư mục đích (dùng cho module dld)"
+    )
+    parser.add_argument(
+        "--format", type=str, help="Chỉ định định dạng đầu ra (dùng cho module dld)"
+    )
+    parser.add_argument(
+        "--threads",
+        "--aria2-threads",
+        dest="threads",
+        type=int,
+        default=MDIA_DLD_DEFAULT_THREADS,
+        help=f"Số luồng tải song song cho aria2 (dùng cho module dld, mặc định {MDIA_DLD_DEFAULT_THREADS})",
+    )
 
     args = parser.parse_args()
 
@@ -316,7 +398,10 @@ def main():
         # Dispatcher cho nhóm OPEN
         # -------------------------------------------------------------
         elif cmd_type == MDIA_TYPE_OPEN:
-            open_this_project_in_IDE(args)
+            if args.file_explorer:
+                open_this_project_in_system_folder()
+            else:
+                open_this_project_in_IDE(args)
 
         # -------------------------------------------------------------
         # Dispatcher cho nhóm GIT
@@ -334,7 +419,7 @@ def main():
         # -------------------------------------------------------------
         elif cmd_type == MDIA_TYPE_IMAGE:
             if cmd_action == MDIA_IMAGE_ACTION_FLIP:
-                run_image_flip()
+                run_image_flip(cmd_value, cmd_extra, cmd_limit)
             elif cmd_action is None:
                 raise Exception(MDIA_WARNING_ACTION_MISSING)
             else:
@@ -350,9 +435,21 @@ def main():
                 MDIA_DLD_ACTION_FB,
                 MDIA_DLD_ACTION_INSTA,
                 MDIA_DLD_ACTION_TIKTOK,
+                MDIA_DLD_ACTION_DOUYIN,
+                MDIA_DLD_ACTION_BILIBILI,
+                MDIA_DLD_ACTION_BILI,
+                MDIA_DLD_ACTION_BILILI,
             ]
             if cmd_action in valid_actions:
-                run_downloader(cmd_action, cmd_value, cmd_extra, args.filename, args.folder, args.format)
+                run_downloader(
+                    cmd_action,
+                    cmd_value,
+                    cmd_extra,
+                    args.filename,
+                    args.folder,
+                    args.format,
+                    args.threads,
+                )
             elif cmd_action is None:
                 raise Exception(MDIA_WARNING_ACTION_MISSING)
             else:

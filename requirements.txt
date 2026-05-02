@@ -1,6 +1,6 @@
 python-dotenv
-moviepy
 opencv-python
-numpy
+Pillow
 PySide6
+PyYAML
 yt-dlp

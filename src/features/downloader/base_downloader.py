@@ -1,6 +1,15 @@
 import subprocess
 import sys
 
+DEFAULT_DOWNLOAD_OPTION = "good-vid"
+DEFAULT_ARIA2_THREADS = 4
+
+
+def ensure_utf8_stdout():
+    if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8")
+
 
 class BaseDownloader:
     """
@@ -8,15 +17,27 @@ class BaseDownloader:
     Các nền tảng có thể kế thừa và ghi đè các cấu hình này nếu cần.
     """
 
-    def __init__(self, platform_name: str, url: str, option: str, filename: str | None = None, folder: str | None = None, format_ext: str | None = None):
+    def __init__(
+        self,
+        platform_name: str,
+        url: str,
+        option: str,
+        filename: str | None = None,
+        folder: str | None = None,
+        format_ext: str | None = None,
+        aria2_threads: int = DEFAULT_ARIA2_THREADS,
+    ):
         self.platform_name = platform_name
         self.url = url
-        self.option = option
+        self.option = option or DEFAULT_DOWNLOAD_OPTION
         self.filename = filename
         self.folder = folder
         self.format_ext = format_ext
+        self.aria2_threads = self._normalize_aria2_threads(aria2_threads)
 
     def download(self):
+        ensure_utf8_stdout()
+
         cmd = ["yt-dlp"]
 
         # 1. Option mapping
@@ -44,11 +65,17 @@ class BaseDownloader:
         if self.folder:
             cmd.extend(["-P", self.folder])
 
-        # 4. Truyền URL
+        # 4. Tăng tốc tải bằng aria2 cho các nội dung media.
+        if self.option != "sub":
+            self.apply_aria2_options(cmd)
+
+        # 5. Truyền URL
         cmd.append(self.url)
 
         print(f"[{self.platform_name}] Đang bắt đầu tải ({self.option})...")
         print(f"URL: {self.url}")
+        if self.option != "sub":
+            print(f"aria2 threads: {self.aria2_threads}")
 
         try:
             # Chạy yt-dlp và in output trực tiếp ra màn hình để người dùng thấy % tiến độ
@@ -60,8 +87,8 @@ class BaseDownloader:
             self.handle_error(e)
             sys.exit(1)
         except FileNotFoundError:
-            print(">>> Lỗi hệ thống: Không tìm thấy 'yt-dlp' trên máy tính.")
-            print("Vui lòng cài đặt yt-dlp bằng lệnh: pip install yt-dlp")
+            print(">>> Lỗi hệ thống: Không tìm thấy 'yt-dlp' hoặc 'aria2c' trên máy tính.")
+            print("Vui lòng cài đặt yt-dlp bằng lệnh: pip install yt-dlp và cài aria2 để có lệnh aria2c.")
             sys.exit(1)
         except Exception as e:
             print(f">>> Lỗi không xác định: {e}")
@@ -85,6 +112,24 @@ class BaseDownloader:
                 print(">>> Đang chuyển về định dạng gốc mặc định của file.")
             else:
                 cmd.extend(["--merge-output-format", self.format_ext.lower()])
+
+    def _normalize_aria2_threads(self, threads: int) -> int:
+        try:
+            normalized_threads = int(threads)
+        except (TypeError, ValueError):
+            normalized_threads = DEFAULT_ARIA2_THREADS
+
+        return max(1, normalized_threads)
+
+    def apply_aria2_options(self, cmd: list):
+        cmd.extend(
+            [
+                "--external-downloader",
+                "aria2c",
+                "--external-downloader-args",
+                f"aria2c:-x {self.aria2_threads} -s {self.aria2_threads} -k 1M",
+            ]
+        )
 
     def set_audio_options(self, cmd: list):
         """Tải và chuyển đổi sang dạng audio (mp3)."""
@@ -113,6 +158,7 @@ class BaseDownloader:
             "  - Video có thể bị giới hạn độ tuổi, riêng tư (private) hoặc yêu cầu đăng nhập."
         )
         print("  - Có thể URL không chứa phụ đề nếu bạn chọn option 'sub'.")
+        print("  - Nếu lỗi liên quan aria2, hãy kiểm tra lệnh aria2c đã có trong PATH.")
         print(
             "  - Cấu trúc trang web đã thay đổi, hãy thử cập nhật yt-dlp: pip install -U yt-dlp"
         )

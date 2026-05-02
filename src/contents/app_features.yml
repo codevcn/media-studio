@@ -61,8 +61,15 @@ mdia_tool:
       actions:
         - id: "ACTION 04"
           title: "Lật ảnh"
-          parameters: "<input_path>: File media đầu vào. <size_mb>: Kích thước (MB). [limit]: Giới hạn số lượng cắt."
+          command: "mda image flip <input_path> <horizontal|vertical> [output_path]"
+          summary: "Lật ảnh theo chiều ngang hoặc chiều dọc."
+          details: "Chạy script `flip_image.py` bằng Pillow. Input path phải là đường dẫn tuyệt đối tới file ảnh. Nếu không truyền output_path, file kết quả sẽ được lưu cạnh ảnh gốc với hậu tố hướng lật."
+          conditions: "Tham số input_path và hướng lật là bắt buộc."
+          parameters: "<input_path>: Đường dẫn tuyệt đối của ảnh đầu vào. <horizontal|vertical>: Hướng lật ảnh. [output_path]: Tùy chọn đường dẫn tuyệt đối của file kết quả."
 
+    - name: "media"
+      description: "Các tính năng xử lý media đa dụng"
+      actions:
         - id: "ACTION 06"
           title: "Chia nhỏ file media theo thời gian"
           command: "mda media part-time <input_path> <duration> [limit]"
@@ -87,11 +94,11 @@ mdia_tool:
       actions:
         - id: "ACTION 09"
           title: "Tải Video / Audio từ mạng xã hội"
-          command: "mda dld <platform> <url> <option> [--filename] [--folder] [--format]"
-          summary: "Tải video, audio hoặc phụ đề từ YouTube, Facebook, Instagram, TikTok bằng yt-dlp."
-          details: "Module downloader đa nền tảng. Hỗ trợ các nền tảng: ytb, ytb-music, fb, insta, tiktok với các tùy chọn tải chất lượng tốt nhất, trung bình, tách âm thanh mp3 hoặc lưu phụ đề SRT. Hỗ trợ thêm tham số --format để chỉ định định dạng đầu ra (mp4, mkv, mp3, wav...)."
-          conditions: "Yêu cầu thư viện yt-dlp. URL phải hợp lệ và public."
-          parameters: "<platform>: ytb | ytb-music | fb | insta | tiktok. <url>: Đường dẫn video. <option>: best-vid | good-vid | audio | sub. [--filename]: Tên file. [--folder]: Thư mục đích. [--format]: Định dạng đích (mp4, mkv, mp3, wav...)"
+          command: "mda dld <platform> <url> [option] [--filename] [--folder] [--format] [--threads]"
+          summary: "Tải video, audio hoặc phụ đề từ YouTube, Facebook, Instagram, TikTok, Douyin, Bilibili bằng yt-dlp."
+          details: "Module downloader đa nền tảng. Hỗ trợ các nền tảng: ytb, ytb-music, fb, insta, tiktok, douyin, bilibili với các tùy chọn tải chất lượng tốt nhất, trung bình, tách âm thanh mp3 hoặc lưu phụ đề SRT. Nếu không truyền option sau URL, mặc định dùng good-vid. Media download được tăng tốc bằng aria2 qua yt-dlp external downloader. Hỗ trợ thêm tham số --format để chỉ định định dạng đầu ra (mp4, mkv, mp3, wav...) và --threads để chỉ định số luồng tải song song của aria2."
+          conditions: "Yêu cầu thư viện yt-dlp và phần mềm aria2 có lệnh aria2c trong PATH. URL phải hợp lệ và public."
+          parameters: "<platform>: ytb | ytb-music | fb | insta | tiktok | douyin | bilibili | bili | bilili. <url>: Đường dẫn video. [option]: best-vid | good-vid | audio | sub, mặc định good-vid. [--filename]: Tên file, mặc định theo tiêu đề media. [--folder]: Thư mục đích, mặc định thư mục đang chạy lệnh. [--format]: Định dạng đích (mp4, mkv, mp3, wav...), mặc định theo yt-dlp hoặc theo option. [--threads] / [--aria2-threads]: Số luồng tải song song của aria2, mặc định 4."
 
 config:
   ROOT_FOLDER_PATH: "Đường dẫn gốc của dự án mdia-studio."

@@ -30,7 +30,9 @@ dld               :Các tính năng tải xuống từ mạng xã hội (Downloa
                   // Vd: mda audio extract "D:\video.mp4" "D:\audio.mp3"
 
 ## image:
-   flip           :Lật hình ảnh theo chiều ngang (input.jpg -> output.jpg).
+   flip           :Lật hình ảnh theo chiều ngang hoặc dọc từ absolute path.
+                  // Vd: mda image flip "D:\image.jpg" horizontal
+                  // Vd: mda image flip "D:\image.jpg" vertical "D:\image_flipped.jpg"
 
 ## media:
    slice          :Cắt một đoạn từ media tại khoảng thời gian cho trước (vd: 00:10-01:22). Tùy chọn [output_filename] để chỉ định tên file xuất.
@@ -41,8 +43,9 @@ dld               :Các tính năng tải xuống từ mạng xã hội (Downloa
                   // Vd: mda media part-time "D:\video.mp4" 20s 5
 
 ## dld:
-   ytb, ytb-music, fb, insta, tiktok   :Tải nội dung từ các nền tảng tương ứng bằng yt-dlp. Hỗ trợ các option: best-vid, good-vid, audio, sub.
-                  // Vd: mda dld ytb "https://youtube.com/..." good-vid --filename "my_video" --folder "C:\Downloads" --format "mp4"
+   ytb, ytb-music, fb, insta, tiktok, douyin, bilibili   :Tải nội dung từ các nền tảng tương ứng bằng yt-dlp + aria2. Hỗ trợ alias bili/bilili cho Bilibili. Hỗ trợ option: best-vid, good-vid, audio, sub. Nếu bỏ qua option, mặc định dùng good-vid. Dùng --threads để chỉ định số luồng tải aria2, mặc định 4.
+                  // Vd: mda dld ytb "https://youtube.com/..."
+                  // Vd: mda dld bili "https://bilibili.com/..." audio --filename "my_audio" --folder "C:\Downloads" --format "mp3" --threads 8
 
 # Example:
 Lệnh `mda app player` sẽ khởi động ứng dụng Video Player.

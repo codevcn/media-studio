@@ -26,13 +26,14 @@ Media Studio là một tập hợp các công cụ dòng lệnh (CLI) và ứng 
 
 ### 5. Tải xuống đa nền tảng (Downloader)
 
-- **Tải Video/Audio (`mda dld <platform>`)**: Hỗ trợ tải nội dung đa phương tiện từ YouTube, YouTube Music, Facebook, Instagram, TikTok bằng `yt-dlp`.
+- **Tải Video/Audio (`mda dld <platform>`)**: Hỗ trợ tải nội dung đa phương tiện từ YouTube, YouTube Music, Facebook, Instagram, TikTok, Douyin, Bilibili bằng `yt-dlp`.
 - Cung cấp tùy chọn tải linh hoạt: chất lượng cao nhất (`best-vid`), chất lượng khá (`good-vid`), chỉ âm thanh (`audio`), hoặc chỉ tải phụ đề (`sub`).
-- Hỗ trợ tuỳ chỉnh tên file (`--filename`) và thư mục đích (`--folder`).
+- Nếu không truyền tùy chọn sau URL, mặc định dùng `good-vid`; vẫn hỗ trợ tuỳ chỉnh tên file (`--filename`) và thư mục đích (`--folder`).
+- Tăng tốc tải bằng `aria2c`; dùng `--threads` hoặc `--aria2-threads` để chỉnh số luồng tải song song, mặc định là `4`.
 
 ### 6. Tiện ích Phụ Trợ
 
-- Lật ảnh nhanh qua lệnh `mda image flip`.
+- Lật ảnh ngang/dọc qua lệnh `mda image flip <absolute_input_path> <horizontal|vertical> [output_path]`.
 - Mở nhanh Workspace trong Editor qua lệnh `mda open`.
 - Tự động hóa quá trình đóng gói Git qua lệnh `mda git commit`.
 
@@ -40,6 +41,7 @@ Media Studio là một tập hợp các công cụ dòng lệnh (CLI) và ứng 
 
 - **Python 3.x**: Đã cài đặt các thư viện trong danh sách `requirements.txt`.
 - **FFmpeg**: Yêu cầu bắt buộc cài đặt và trỏ biến môi trường `PATH` nhằm thực hiện mọi thao tác giải mã/mã hóa đa phương tiện.
+- **aria2**: Cần có lệnh `aria2c` trong `PATH` để tăng tốc tải xuống cho nhóm lệnh `dld`.
 
 ## 📁 Cấu trúc lưu trữ dữ liệu
 
