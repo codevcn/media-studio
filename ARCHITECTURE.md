@@ -1,550 +1,375 @@
-# Kiến trúc hệ thống CLI Dispatcher
+# Media Studio Architecture
 
-Tài liệu này mô tả cách xây dựng một hệ thống CLI dùng một file trung tâm để nhận lệnh, phân tích tham số, rồi điều phối sang các script con. Nội dung được viết theo hướng tổng quát để có thể áp dụng cho các project automation tương tự, không phụ thuộc vào đường dẫn, máy tính, tài khoản, hoặc tên riêng của một project cụ thể.
+Tài liệu này mô tả kiến trúc hiện tại của Media Studio CLI (`mda`) sau khi cấu trúc thư mục đã được gom lại theo nhóm `src/features/*` và dữ liệu runtime được chuyển ra thư mục `data/` ở root project.
 
----
+## 1. Mục Tiêu
 
-## 1. Mục tiêu kiến trúc
+Media Studio là một bộ công cụ cá nhân để:
 
-Hệ thống được thiết kế cho các bộ công cụ cá nhân hoặc nội bộ cần gom nhiều thao tác nhỏ vào một lệnh CLI thống nhất.
+- Gom nhiều thao tác media vào một CLI ngắn: `mda`.
+- Điều phối lệnh từ một dispatcher trung tâm.
+- Tách mỗi nhóm nghiệp vụ thành script hoặc module độc lập.
+- Dùng các tool đã ổn định như FFmpeg, yt-dlp, aria2c và spotDL thay vì tự viết lại logic domain lớn.
+- Giữ dữ liệu input/output, cookies và tài liệu nghiên cứu tách khỏi source code.
 
-Các mục tiêu chính:
-
-- Có một entry point dễ nhớ cho người dùng.
-- Có một dispatcher trung tâm để định tuyến lệnh.
-- Tách logic nghiệp vụ sang các script độc lập.
-- Có tài liệu command-line ngắn gọn cho người dùng cuối.
-- Có file mô tả tính năng có cấu trúc để tool có thể in mô tả tự động.
-- Có quy ước đặt tên hằng số rõ ràng để mở rộng mà ít nhầm lẫn.
-- Có cách lưu nhanh project lên remote Git repository.
-
----
-
-## 2. System Design
-
-Luồng tổng thể:
+## 2. Luồng Tổng Thể
 
 ```text
 User
   |
   v
-CLI entry point
+mda.cmd
   |
   v
-src/main.py
-  |
-  +-- parse args
-  +-- normalize flags/options
-  +-- dispatch by type/action
+python src/main.py <type> <action> [value] [extra] [limit] [flags]
   |
   v
-handler function
+argparse + dispatcher
   |
-  v
-subprocess / helper script / system command
+  +-- app      -> src/apps/video_player/video_player.py
+  +-- video    -> src/features/video/*.py
+  +-- audio    -> src/features/audio/*.py
+  +-- image    -> src/features/image/*.py
+  +-- media    -> src/features/media/*.py
+  +-- dld      -> src/features/downloader/run_downloader.py
+  +-- open     -> editor/File Explorer helper
+  +-- git      -> src/features/system/media_studio_git.py
+  +-- --des    -> src/features/useful/print_feature_description.py
 ```
 
-Các thành phần chính:
+Nguyên tắc chính: `src/main.py` chỉ parse, validate cấp CLI và gọi script con. Logic xử lý thực tế nằm trong từng nhóm feature.
 
-| Thành phần          | Vai trò                                                                      |
-| ------------------- | ---------------------------------------------------------------------------- |
-| CLI entry point     | File lệnh mỏng, chỉ forward toàn bộ tham số vào `src/main.py`.               |
-| `src/main.py`       | Dispatcher trung tâm: parse CLI, kiểm tra type/action, gọi handler.          |
-| Handler functions   | Hàm nhỏ trong dispatcher, chỉ build command args rồi gọi script con.         |
-| `src/system-codes/` | Script nội bộ phục vụ chính hệ CLI, ví dụ in nội dung, thao tác Git, status. |
-| `src/useful-codes/` | Script tính năng độc lập, mỗi file xử lý một nhóm nghiệp vụ cụ thể.          |
-| `src/contents/`     | Tài liệu và dữ liệu tĩnh dùng để in help, mô tả feature, template.           |
-| `.env`              | Cấu hình local, path, token, hoặc thông tin thay đổi theo môi trường.        |
-| Remote Git repo     | Nơi lưu version project để backup và đồng bộ nhanh giữa nhiều máy.           |
-
-Nguyên tắc thiết kế:
-
-- Dispatcher không chứa nghiệp vụ nặng.
-- Mỗi feature script có thể chạy độc lập nếu truyền đủ tham số.
-- Dữ liệu mô tả tính năng không hardcode trong dispatcher.
-- Path hoặc config phụ thuộc máy nên đưa vào `.env` hoặc file config.
-- Các thao tác nguy hiểm như delete, reset, purge nên có xác nhận hoặc kiểm tra rõ ràng.
-
----
-
-## 3. Kiến trúc code
-
-### 3.1. Entry point
-
-Entry point nên là một wrapper mỏng:
-
-```cmd
-@echo off
-python "%~dp0src\main.py" %*
-```
-
-Nhiệm vụ của file này chỉ là giúp người dùng gọi lệnh ngắn, ví dụ:
-
-```bash
-tool <type> <action> [value] [extra] [flags]
-```
-
-Không nên đặt logic nghiệp vụ trong wrapper.
-
-### 3.2. Dispatcher
-
-`src/main.py` là nơi định nghĩa:
-
-- Hằng số type/action/flag/warning.
-- Parser CLI bằng `argparse`.
-- Các handler function.
-- Khối dispatch chính.
-- Cơ chế gọi script con bằng `subprocess`.
-
-Mẫu command grammar:
+## 3. Cấu Trúc Thư Mục
 
 ```text
-<tool> [<type> [<action> [<value> [<extra>]]]] [flags]
-```
-
-Ví dụ generic:
-
-```bash
-tool print help
-tool run rename-files "path/to/folder" "prefix"
-tool git commit -m "update feature"
-tool feature action --des
-```
-
-### 3.3. Handler
-
-Một handler tốt nên ngắn và có một trách nhiệm:
-
-```python
-def run_feature(value: str | None = None):
-    cmd_args = [
-        "python",
-        f"{USEFUL_CODES_FOLDER_PATH}/feature_script.py",
-    ]
-    if value:
-        cmd_args.append(value)
-
-    result = subprocess.run(cmd_args, check=False)
-    sys.exit(result.returncode)
-```
-
-Quy ước:
-
-- Handler chỉ nhận dữ liệu đã parse từ CLI.
-- Handler build command list thay vì ghép chuỗi khi có thể.
-- Handler trả đúng exit code của script con nếu script con có ý nghĩa thành công/thất bại.
-- Script con chịu trách nhiệm validate nghiệp vụ chi tiết.
-
-### 3.4. Script con
-
-Script con trong `useful-codes` nên có cấu trúc:
-
-```python
-def parse_args():
-    ...
-
-def validate_inputs(args):
-    ...
-
-def main():
-    args = parse_args()
-    validate_inputs(args)
-    ...
-
-if __name__ == "__main__":
-    main()
-```
-
-Script con nên tự in thông báo lỗi rõ ràng, tự kiểm tra file/folder cần dùng, và hạn chế phụ thuộc vào trạng thái global của dispatcher.
-
----
-
-## 4. Cách đặt tên hằng số
-
-Hằng số trong dispatcher nên có prefix chung theo tên ứng dụng. Dùng chữ hoa, phân tách bằng `_`.
-
-### 4.1. Type constants
-
-Mẫu:
-
-```python
-APP_TYPE_RUN = "run"
-APP_TYPE_PRINT = "print"
-APP_TYPE_GIT = "git"
-```
-
-Quy ước:
-
-- Format: `<APP>_TYPE_<TYPE_NAME>`.
-- Giá trị CLI nên là chữ thường, ưu tiên `kebab-case` nếu có nhiều từ.
-- Type là nhóm lệnh cấp cao, ví dụ `run`, `print`, `open`, `git`.
-
-### 4.2. Action constants
-
-Mẫu:
-
-```python
-APP_RUN_RENAME_FILES = "rename-files"
-APP_RUN_DELETE_FILES = "delete-files"
-APP_PRINT_HELP = "help"
-```
-
-Quy ước:
-
-- Format: `<APP>_<TYPE_NAME>_<ACTION_NAME>`.
-- `TYPE_NAME` phải khớp nhóm type chứa action.
-- `ACTION_NAME` mô tả hành động cụ thể.
-- Giá trị CLI nên ổn định vì người dùng sẽ ghi nhớ và có thể dùng trong script ngoài.
-
-### 4.3. Flag constants
-
-Mẫu:
-
-```python
-APP_FLAG_HELP = "--help"
-APP_FLAG_MESSAGE = "--message"
-APP_FLAG_DESCRIPTION = "--des"
-```
-
-Quy ước:
-
-- Format: `<APP>_FLAG_<FLAG_NAME>`.
-- Nếu có short flag và long flag, có thể đặt riêng:
-
-```python
-APP_FLAG_M = "-m"
-APP_FLAG_MESSAGE = "--message"
-```
-
-### 4.4. Warning/status constants
-
-Mẫu:
-
-```python
-APP_WARNING_TYPE_WRONG = "WRONG-TYPE"
-APP_WARNING_ACTION_MISSING = "MISSING-ACTION"
-APP_STATUS_OK = "OK"
-```
-
-Quy ước:
-
-- Warning dùng format `<APP>_WARNING_<SCOPE>_<STATE>`.
-- Status dùng format `<APP>_STATUS_<STATE>`.
-- Giá trị in ra terminal nên ngắn, dễ grep, và ổn định.
-
-### 4.5. Function naming
-
-Python function dùng `snake_case`:
-
-```python
-def print_help():
-    ...
-
-def run_git_command():
-    ...
-
-def open_project_folder():
-    ...
-```
-
-Tên function nên nói rõ hành động. Tránh tên quá chung như `process`, `handle`, `do`.
-
----
-
-## 5. Cấu trúc thư mục
-
-Cấu trúc đề xuất:
-
-```text
-project-root/
-├── .env
-├── .gitignore
-├── README.md
-├── ARCHITECTURE.md
+media-studio/
+├── data/
+│   ├── audio/
+│   ├── credentials/
+│   ├── image/
+│   └── video/
+│       ├── input/
+│       └── output/
+├── doc/
+│   ├── spotdl-spotify-downloader.md
+│   └── tích hợp douyin downloader tool.md
+├── src/
+│   ├── apps/
+│   │   └── video_player/
+│   ├── configs/
+│   ├── contents/
+│   ├── features/
+│   │   ├── audio/
+│   │   ├── downloader/
+│   │   ├── image/
+│   │   ├── media/
+│   │   ├── system/
+│   │   ├── useful/
+│   │   └── video/
+│   ├── utils/
+│   └── main.py
+├── mda.cmd
+├── ins.cmd
 ├── requirements.txt
-├── tool.cmd hoặc tool.sh
-│
-└── src/
-    ├── main.py
-    │
-    ├── cmd/
-    │   └── init.cmd
-    │
-    ├── contents/
-    │   ├── help.txt
-    │   ├── app_features.yml
-    │   ├── statuses.txt
-    │   └── other-static-content.txt
-    │
-    ├── system-codes/
-    │   ├── _git.py
-    │   ├── _print_content.py
-    │   └── _statuses.py
-    │
-    └── useful-codes/
-        ├── feature_a.py
-        ├── feature_b.py
-        └── integration-name/
-            ├── configs.json
-            └── integration_script.py
+├── README.md
+└── ARCHITECTURE.md
 ```
 
-Ý nghĩa từng thư mục:
+## 4. Vai Trò Từng Khu Vực
 
-| Thư mục                           | Mục đích                                                                  |
-| --------------------------------- | ------------------------------------------------------------------------- |
-| `src/cmd/`                        | Batch/shell scripts phục vụ khởi tạo hoặc lệnh hệ điều hành.              |
-| `src/contents/`                   | File text/YAML dùng làm tài liệu và dữ liệu mô tả.                        |
-| `src/system-codes/`               | Script nội bộ phục vụ framework CLI.                                      |
-| `src/useful-codes/`               | Script tính năng thực tế mà người dùng gọi qua CLI.                       |
-| `src/useful-codes/<integration>/` | Nhóm script/config cho một tích hợp lớn như cloud, storage, browser, API. |
+| Khu vực | Vai trò |
+| --- | --- |
+| `mda.cmd` | Wrapper Windows gọi `python src/main.py %*`. |
+| `ins.cmd` | Cài dependency Python từ `requirements.txt`. |
+| `data/` | Dữ liệu runtime: media input/output, ảnh, audio, cookie/credential. |
+| `doc/` | Ghi chú nghiên cứu và decision log cho các tích hợp đặc biệt. |
+| `src/main.py` | CLI dispatcher trung tâm. |
+| `src/apps/` | Ứng dụng GUI. Hiện có video player kép. |
+| `src/features/audio/` | Script xử lý audio. |
+| `src/features/video/` | Script xử lý video. |
+| `src/features/image/` | Script xử lý image. |
+| `src/features/media/` | Script cắt/chia file media dùng chung cho audio/video. |
+| `src/features/downloader/` | Downloader đa nền tảng. |
+| `src/features/system/` | Helper hệ thống, ví dụ git commit/push. |
+| `src/features/useful/` | Helper tiện ích, ví dụ in mô tả tính năng từ YAML. |
+| `src/contents/` | Nội dung tĩnh cho help và catalog feature. |
+| `src/configs/` | Config JSON. |
+| `src/utils/` | Helper dùng chung. |
 
-Quy ước:
+## 5. CLI Grammar
 
-- File nội bộ có thể bắt đầu bằng `_` để phân biệt với feature người dùng gọi trực tiếp.
-- Feature script nên dùng tên mô tả hành động: `rename_files.py`, `print_os_info.py`, `sync_to_remote.py`.
-- Không để dữ liệu secret trong repo. Secret đặt trong `.env` hoặc nơi lưu config an toàn.
-- File config mẫu có thể commit, file config thật có token nên ignore.
-
----
-
-## 6. Dùng Git để lưu nhanh project lên remote repo
-
-### 6.1. Thiết lập lần đầu
-
-```bash
-git init
-git add .
-git commit -m "init project"
-git branch -M main
-git remote add origin <remote-repo-url>
-git push -u origin main
-```
-
-Trước khi commit, nên có `.gitignore` tối thiểu:
-
-```gitignore
-.env
-.venv/
-venv/
-__pycache__/
-*.pyc
-*.log
-*.bak.*
-```
-
-### 6.2. Lưu nhanh các thay đổi
-
-```bash
-git status
-git add .
-git commit -m "update tool"
-git push origin main
-```
-
-Nếu hệ thống có command riêng cho Git, command đó nên làm đúng các bước:
+Cú pháp tổng quát:
 
 ```text
-validate repo
-git add .
-git commit -m "<message>"
-git push origin main
-return exit code
+mda <type> <action> [value] [extra] [limit] [flags]
 ```
 
-### 6.3. Nguyên tắc an toàn khi dùng Git helper
+Các type hiện có:
 
-- Luôn bắt buộc commit message.
-- Kiểm tra thư mục hiện tại có phải Git repository không.
-- Không tự chạy `git reset --hard`.
-- Không tự xóa remote.
-- Không commit `.env`, token, file cache, file backup có dữ liệu nhạy cảm.
-- Nếu helper dùng branch mặc định, nên cấu hình branch đó bằng biến config thay vì hardcode.
+| Type | Ý nghĩa |
+| --- | --- |
+| `app` | App GUI. |
+| `video` | Xử lý video. |
+| `audio` | Xử lý âm thanh. |
+| `image` | Xử lý hình ảnh. |
+| `media` | Xử lý media chung. |
+| `dld` | Downloader đa nền tảng. |
+| `open` | Mở project. |
+| `git` | Helper Git. |
 
----
+Flag đáng chú ý:
 
-## 7. Dùng `help.txt` để mô tả CLI cho người dùng
+- `--des`: in mô tả chi tiết từ `src/contents/app_features.yml`.
+- `--filename`, `--folder`, `--format`, `--threads`: dùng cho downloader.
+- `--cookies`, `--cookies-from-browser`: dùng cho downloader khi platform cần cookie.
+- `-m`, `--message`: dùng cho `mda git commit`.
+- `-a`, `--anti`: mở bằng Antigravity IDE thay vì VS Code.
+- `-f`, `--file_explorer`: mở project bằng File Explorer.
 
-`src/contents/help.txt` là tài liệu ngắn gọn in ra khi người dùng gọi lệnh không tham số hoặc gọi help.
+## 6. Dispatcher
 
-Mục tiêu của `help.txt`:
+`src/main.py` giữ các trách nhiệm:
 
-- Cho người dùng biết cú pháp tổng quát.
-- Liệt kê type/action đang có.
-- Mô tả ngắn mỗi action làm gì.
-- Nêu các flag phổ biến.
-- Đưa ví dụ command thường dùng.
+- Load `.env`.
+- Định nghĩa constant type/action.
+- Parse CLI bằng `argparse`.
+- Validate tham số cấp dispatcher.
+- Build command list để gọi script con bằng `subprocess.run`.
+- Điều hướng `--des` sang `src/features/useful/print_feature_description.py`.
+- Điều hướng `git commit` sang `src/features/system/media_studio_git.py`.
 
-Cấu trúc đề xuất:
+Các handler không nên chứa logic xử lý media nặng. Ví dụ `run_media_slice(...)` chỉ kiểm tra tham số bắt buộc, build command và gọi `src/features/media/slice_media.py`.
+
+## 7. Downloader Architecture
+
+Downloader có 3 file chính:
 
 ```text
-# Help for <tool-name>
-
-# Usage:
-<tool> <type> <action> [value] [extra] [flags]
-
-# Flags:
--h, --help
--m, --message
---des
-
-# Types:
-run
-print
-git
-
-# Actions:
-## run:
-  rename-files
-  delete-files
-
-## print:
-  help
-  statuses
-
-# Examples:
-<tool> run rename-files "path/to/folder" "prefix"
-<tool> feature action --des
+src/features/downloader/
+├── base_downloader.py
+├── platform_downloaders.py
+└── run_downloader.py
 ```
 
-Quy ước cập nhật:
+### `run_downloader.py`
 
-- Khi thêm type mới trong dispatcher, thêm type đó vào `help.txt`.
-- Khi thêm action mới, thêm action vào đúng nhóm.
-- Mô tả trong `help.txt` chỉ nên ngắn. Chi tiết dài để trong `app_features.yml`.
-- Ví dụ command trong `help.txt` nên chạy được hoặc gần với cú pháp thật.
+Vai trò:
 
----
+- Parse riêng các flag downloader.
+- Map platform string sang class downloader.
+- Khởi tạo downloader và gọi `.download()`.
 
-## 8. Dùng `app_features.yml` để mô tả toàn bộ tính năng
+Platform hiện có:
 
-`src/contents/app_features.yml` là catalog có cấu trúc cho toàn bộ tính năng. File này phục vụ lệnh kiểu `--des`, giúp in mô tả chi tiết cho một command cụ thể.
-
-Mục tiêu của `app_features.yml`:
-
-- Là nguồn mô tả đầy đủ hơn `help.txt`.
-- Có thể parse bằng code.
-- Mỗi action có title, command, summary, details, conditions.
-- Giúp người dùng xem mô tả theo type/action mà không phải mở tài liệu dài.
-
-Cấu trúc đề xuất:
-
-```yaml
-tool:
-  flags:
-    - flag: "-h / --help"
-      description: "In help ra terminal."
-
-  types:
-    - name: "run"
-      description: "Thực thi các script tiện ích."
-      actions:
-        - id: "RUN_001"
-          title: "Rename Files"
-          command: '<tool> run rename-files "<folder_path>" "<prefix>"'
-          summary: "Đổi tên file trong một thư mục theo prefix."
-          details: "Script đọc các file cấp 1, sắp xếp, đổi tên theo pattern ổn định."
-          conditions: "Folder phải tồn tại. Prefix nên là chuỗi không rỗng."
-
-    - name: "print"
-      description: "In thông tin ra terminal."
-      actions:
-        - id: "PRINT_001"
-          title: "Print Help"
-          command: "<tool> print help"
-          summary: "In hướng dẫn sử dụng."
-          details: "Đọc nội dung từ src/contents/help.txt."
-          conditions: "File help.txt phải tồn tại."
-
-  config:
-    ROOT_FOLDER_PATH: "Đường dẫn gốc của project."
-    CONTENTS_FOLDER_PATH: "Đường dẫn đến thư mục contents."
+```text
+ytb, ytb-music, fb, insta, tiktok, douyin,
+bilibili, bili, bilili, soundcloud, spotify
 ```
 
-Quy ước nội dung:
+### `base_downloader.py`
 
-- `name` của type phải khớp giá trị CLI trong dispatcher.
-- `command` phải chứa command thật để parser tìm được type/action.
-- `summary` viết một câu ngắn.
-- `details` mô tả behavior chính, input/output, side effect.
-- `conditions` ghi dependency, file cần tồn tại, quyền cần có, hoặc cảnh báo.
-- `id` nên ổn định để dễ tham chiếu trong tài liệu hoặc changelog.
+Vai trò:
 
-### Quan hệ giữa `help.txt` và `app_features.yml`
+- Build command `yt-dlp`.
+- Map option `best-vid`, `good-vid`, `audio`, `sub`.
+- Áp dụng `--format`, `--folder`, `--filename`.
+- Áp dụng cookies.
+- Áp dụng aria2 external downloader.
+- In lỗi gợi ý thân thiện.
 
-| File               | Dành cho                             | Mức chi tiết | Cách dùng                               |
-| ------------------ | ------------------------------------ | ------------ | --------------------------------------- |
-| `help.txt`         | Người dùng cần nhớ lệnh nhanh        | Ngắn         | In khi gọi help hoặc không truyền lệnh. |
-| `app_features.yml` | Người dùng cần hiểu kỹ một tính năng | Chi tiết     | Parse và in khi dùng `--des`.           |
+### `platform_downloaders.py`
 
-Khi thêm tính năng mới, cập nhật theo thứ tự:
+Vai trò:
 
-1. Thêm hằng số type/action trong dispatcher.
-2. Thêm handler trong dispatcher.
-3. Thêm script con nếu cần.
-4. Thêm mô tả ngắn vào `help.txt`.
-5. Thêm mô tả đầy đủ vào `app_features.yml`.
-6. Chạy command `--des` để kiểm tra mô tả được parse đúng.
+- Định nghĩa class theo platform.
+- Các platform thông thường kế thừa `BaseDownloader`.
+- Platform có behavior riêng override method tương ứng.
 
----
+Các điểm đặc biệt:
 
-## 9. Quy trình thêm một tính năng mới
+- `FacebookDownloader` override good video format để fallback ổn hơn.
+- `DouyinDownloader` tự thử cookies từ `chrome`, `edge`, `firefox` nếu user không truyền cookie.
+- `SoundCloudDownloader` dùng `yt-dlp`, nhưng `good-vid`/`best-vid` được fallback sang audio vì SoundCloud là audio-first.
+- `SpotifyDownloader` không dùng `yt-dlp` trực tiếp, mà gọi `spotdl download`.
 
-Ví dụ thêm command generic:
+## 8. Spotify Và spotDL
+
+Spotify được tách thành downloader riêng vì pipeline `yt-dlp` hiện tại không phù hợp để tải Spotify như các platform khác.
+
+Quy ước hiện tại:
+
+- `mda dld spotify ...` chỉ hỗ trợ audio.
+- `sub` không hợp lệ với Spotify.
+- `spotDL` là dependency tùy chọn, không nằm trong `requirements.txt`.
+- `spotDL` nên được cài bằng `pipx` để tránh xung đột dependency trong Python chính.
+
+Ví dụ:
 
 ```bash
-tool run compress-files <folder>
+python -m pip install --user pipx
+python -m pipx ensurepath
+python -m pipx install spotdl
 ```
 
-Các bước:
+Tài liệu chi tiết nằm ở:
 
-1. Tạo script `src/useful-codes/compress_files.py`.
-2. Đặt hằng số:
+```text
+doc/spotdl-spotify-downloader.md
+```
+
+## 9. Data Architecture
+
+Dữ liệu runtime nằm ở root `data/`:
+
+```text
+data/
+├── audio/
+├── credentials/
+├── image/
+└── video/
+    ├── input/
+    └── output/
+```
+
+Ý nghĩa:
+
+- `data/video/input/`: video nguồn.
+- `data/video/output/`: video kết quả.
+- `data/audio/`: audio input/output hoặc file tách âm.
+- `data/image/`: ảnh input/output.
+- `data/credentials/`: cookies hoặc file credential cục bộ.
+
+Không commit credential thật hoặc file nhạy cảm nếu repo được đẩy lên remote.
+
+## 10. GUI Video Player
+
+App nằm tại:
+
+```text
+src/apps/video_player/video_player.py
+```
+
+Chức năng:
+
+- Phát 2 video song song.
+- Quét danh sách video input/output.
+- Hiển thị sidebar cặp video.
+- Hỗ trợ shortcut playback, seek, volume và chọn nguồn audio.
+
+Dependency chính:
+
+- `PySide6`
+- `opencv-python`
+
+Ghi chú migration: quy ước dữ liệu mới là `data/video/input` và `data/video/output`. Khi chỉnh video player hoặc config liên quan, nên đồng bộ về quy ước này để tránh quay lại path cũ `src/data/media/...`.
+
+## 11. Feature Catalog Và Help
+
+Hai file nội dung tĩnh:
+
+```text
+src/contents/help.txt
+src/contents/app_features.yml
+```
+
+Vai trò:
+
+- `help.txt`: nội dung help ngắn khi chạy `mda --help`.
+- `app_features.yml`: catalog có cấu trúc cho `mda <type> <action> --des`.
+
+Khi thêm hoặc đổi command, cập nhật đồng thời:
+
+1. Constant và dispatch trong `src/main.py`.
+2. Handler hoặc script feature.
+3. Help ngắn trong `src/contents/help.txt`.
+4. Mô tả chi tiết trong `src/contents/app_features.yml`.
+5. README nếu ảnh hưởng cách dùng.
+6. Tài liệu trong `doc/` nếu là tích hợp phức tạp.
+
+## 12. External Tools
+
+| Tool | Dùng cho |
+| --- | --- |
+| FFmpeg | Cắt, chia, encode/copy stream, tách audio, xóa logo, trích frame. |
+| ffprobe | Đọc metadata media cho chia theo dung lượng. |
+| yt-dlp | Downloader chính cho nhiều platform. |
+| aria2c | Tăng tốc download qua external downloader của yt-dlp. |
+| spotDL | Downloader audio cho Spotify. |
+| Git | Helper `mda git commit`. |
+
+Python packages chính trong `requirements.txt`:
+
+```text
+python-dotenv
+opencv-python
+Pillow
+PySide6
+PyYAML
+yt-dlp
+```
+
+`spotDL` không nằm trong `requirements.txt`.
+
+## 13. Mở Rộng Feature
+
+Khi thêm một feature mới:
+
+1. Chọn nhóm thư mục trong `src/features/<group>/`.
+2. Tạo script có thể chạy độc lập.
+3. Thêm constant action trong `src/main.py`.
+4. Thêm handler build command trong `src/main.py`.
+5. Thêm nhánh dispatch.
+6. Cập nhật `help.txt` và `app_features.yml`.
+7. Cập nhật README nếu người dùng cần biết.
+8. Chạy kiểm tra.
+
+Mẫu handler:
 
 ```python
-APP_RUN_COMPRESS_FILES = "compress-files"
+def run_new_feature(input_path: str, option: str | None = None):
+    if not input_path:
+        raise Exception("MISSING-ACTION - Cần truyền input_path")
+
+    script_path = get_script_path("features/<group>/new_feature.py")
+    cmd = [sys.executable, script_path, input_path]
+    if option:
+        cmd.append(option)
+    subprocess.run(cmd)
+    sys.exit(0)
 ```
 
-3. Tạo handler:
+## 14. Kiểm Tra
 
-```python
-def compress_files(folder_path: str | None = None):
-    cmd_args = ["python", f"{USEFUL_CODES_FOLDER_PATH}/compress_files.py"]
-    if folder_path:
-        cmd_args.append(folder_path)
-    result = subprocess.run(cmd_args, check=False)
-    sys.exit(result.returncode)
-```
-
-4. Thêm nhánh dispatch:
-
-```python
-elif action_included == APP_RUN_COMPRESS_FILES:
-    compress_files(value_included)
-```
-
-5. Cập nhật `help.txt`.
-6. Cập nhật `app_features.yml`.
-7. Chạy thử:
+Kiểm tra nhanh sau khi chỉnh code:
 
 ```bash
-tool run compress-files "path/to/folder"
-tool run compress-files --des
+python -m compileall -q src
+python src\main.py --help
+python src\main.py dld spotify --des
+python src\features\downloader\run_downloader.py unknown https://example.com
 ```
 
----
+Kiểm tra dependency:
 
-## 10. Checklist chất lượng
+```bash
+python -m pip check
+```
 
-Trước khi xem một feature là hoàn chỉnh:
+Kiểm tra markdown/diff cơ bản:
 
-- Command có trong dispatcher.
-- Command có handler rõ ràng.
-- Script con validate input.
-- Command có mô tả trong `help.txt`.
-- Command có mô tả trong `app_features.yml`.
-- Command lỗi có thông báo dễ hiểu.
-- Path/config local không hardcode nếu có thể đưa vào `.env`.
-- Feature có ví dụ sử dụng.
-- Nếu có thao tác xóa/ghi đè, có kiểm tra hoặc xác nhận.
-- Thay đổi đã được commit và push lên remote repo.
+```bash
+git diff --check
+```
+
+## 15. Migration Notes
+
+Các thay đổi cấu trúc quan trọng gần đây:
+
+- `src/system-codes/` đã được thay bằng `src/features/system/`.
+- `src/useful-codes/` đã được thay bằng `src/features/useful/`.
+- Dữ liệu runtime chuyển từ kiểu cũ `src/data/media/...` sang `data/...` ở root project.
+- Downloader thêm `soundcloud` qua `yt-dlp`.
+- Downloader thêm `spotify` qua `spotDL`.
+- `spotDL` từng được thử đưa vào `requirements.txt` nhưng gây xung đột dependency; hiện được coi là CLI optional cài qua `pipx`.
+
+Khi gặp path cũ trong source hoặc config, ưu tiên cập nhật về cấu trúc hiện tại thay vì tạo lại thư mục legacy.
