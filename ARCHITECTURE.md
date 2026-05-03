@@ -33,8 +33,8 @@ argparse + dispatcher
   +-- media    -> src/features/media/*.py
   +-- dld      -> src/features/downloader/run_downloader.py
   +-- open     -> editor/File Explorer helper
-  +-- git      -> src/features/system/media_studio_git.py
-  +-- --des    -> src/features/useful/print_feature_description.py
+  +-- git      -> src/features/system/_media_studio_git.py
+  +-- --des    -> src/features/system/_print_feature_description.py
 ```
 
 Nguyên tắc chính: `src/main.py` chỉ parse, validate cấp CLI và gọi script con. Logic xử lý thực tế nằm trong từng nhóm feature.
@@ -135,8 +135,8 @@ Flag đáng chú ý:
 - Parse CLI bằng `argparse`.
 - Validate tham số cấp dispatcher.
 - Build command list để gọi script con bằng `subprocess.run`.
-- Điều hướng `--des` sang `src/features/useful/print_feature_description.py`.
-- Điều hướng `git commit` sang `src/features/system/media_studio_git.py`.
+- Điều hướng `--des` sang `src/features/system/_print_feature_description.py`.
+- Điều hướng `git commit` sang `src/features/system/_media_studio_git.py`.
 
 Các handler không nên chứa logic xử lý media nặng. Ví dụ `run_media_slice(...)` chỉ kiểm tra tham số bắt buộc, build command và gọi `src/features/media/slice_media.py`.
 

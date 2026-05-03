@@ -43,7 +43,7 @@ dld               :Các tính năng tải xuống từ mạng xã hội (Downloa
                   // Vd: mda media part-time "D:\video.mp4" 20s 5
 
 ## dld:
-   ytb, ytb-music, fb, insta, tiktok, douyin, bilibili, soundcloud, spotify   :Tải nội dung từ các nền tảng tương ứng. YouTube/Facebook/Instagram/TikTok/Douyin/Bilibili/SoundCloud dùng yt-dlp + aria2; Spotify dùng spotDL. Hỗ trợ alias bili/bilili cho Bilibili. Hỗ trợ option: best-vid, good-vid, audio, sub. Riêng Spotify chỉ tải audio. Nếu bỏ qua option, mặc định dùng good-vid. Dùng --threads để chỉ định số luồng tải, mặc định 4. Douyin tự thử cookies từ chrome/edge/firefox nếu không truyền cookie thủ công.
+   ytb, ytb-music, fb, insta, tiktok, douyin, bilibili, scloud, spot   :Tải nội dung từ các nền tảng tương ứng. YouTube/Facebook/Instagram/TikTok/Douyin/Bilibili/SoundCloud dùng yt-dlp + aria2; Spotify dùng spotDL. Hỗ trợ alias bili/bilili cho Bilibili. Hỗ trợ option: best-vid, good-vid, audio, sub. Riêng Spotify chỉ tải audio. Nếu bỏ qua option, mặc định dùng good-vid. Dùng --threads để chỉ định số luồng tải, mặc định 4. Douyin tự thử cookies từ chrome/edge/firefox nếu không truyền cookie thủ công.
                   // Vd: mda dld douyin "https://v.douyin.com/..."
                   // Vd: mda dld douyin "https://v.douyin.com/..." --cookies-from-browser edge
                   // Vd: mda dld bili "https://bilibili.com/..." audio --filename "my_audio" --folder "C:\Downloads" --format "mp3" --threads 8

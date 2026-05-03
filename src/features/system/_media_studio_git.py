@@ -37,7 +37,7 @@ def git_commit_and_push(message: str):
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Sử dụng: python media_studio_git.py <action> <message>")
+        print("Sử dụng: python _media_studio_git.py <action> <message>")
         sys.exit(1)
 
     action = sys.argv[1]

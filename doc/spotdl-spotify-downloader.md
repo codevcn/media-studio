@@ -62,7 +62,7 @@ Các thay đổi chính đã thực hiện:
     - `--cookies-from-browser` được truyền qua `spotdl --yt-dlp-args`.
     - Nếu thiếu `spotdl`, chương trình in hướng dẫn cài bằng `pipx`.
 
-- `src/features/useful/print_feature_description.py`
+- `src/features/system/_print_feature_description.py`
   - Thêm `spotify` và `soundcloud` vào alias để `mda dld spotify --des` vẫn in đúng mô tả.
 
 - `src/contents/help.txt`

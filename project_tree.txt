@@ -43,9 +43,9 @@ Tree view of: D:\D-Documents\TOOLs\media-studio
     │   │   ├── part_media_by_time.py
     │   │   └── slice_media.py
     │   ├── system
-    │   │   └── media_studio_git.py
+    │   │   └── _media_studio_git.py
     │   ├── useful
-    │   │   └── print_feature_description.py
+    │   │   └── _print_feature_description.py
     │   └── video
     │       ├── extract_frames.py
     │       └── video_watermark_remover.py

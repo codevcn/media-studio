@@ -131,8 +131,7 @@ mda dld douyin "https://v.douyin.com/..." --cookies "data\credentials\cookies.tx
 - `src/features/image/`: tính năng image.
 - `src/features/media/`: cắt/chia file media.
 - `src/features/downloader/`: downloader đa nền tảng.
-- `src/features/system/`: helper hệ thống, hiện có `media_studio_git.py`.
-- `src/features/useful/`: helper tiện ích, hiện có `print_feature_description.py`.
+- `src/features/system/`: helper hệ thống, hiện có `_media_studio_git.py` và `_print_feature_description.py`.
 - `src/contents/`: help text và catalog mô tả tính năng.
 - `src/configs/`: cấu hình JSON.
 - `src/utils/`: helper dùng chung.
