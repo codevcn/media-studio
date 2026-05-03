@@ -18,6 +18,8 @@ DLD_PLATFORM_ALIASES = {
     "bilibili",
     "bili",
     "bilili",
+    "soundcloud",
+    "spotify",
 }
 
 

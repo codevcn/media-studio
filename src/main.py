@@ -39,6 +39,8 @@ MDIA_DLD_ACTION_DOUYIN = "douyin"
 MDIA_DLD_ACTION_BILIBILI = "bilibili"
 MDIA_DLD_ACTION_BILI = "bili"
 MDIA_DLD_ACTION_BILILI = "bilili"
+MDIA_DLD_ACTION_SOUNDCLOUD = "scloud"
+MDIA_DLD_ACTION_SPOTIFY = "spo"
 MDIA_DLD_DEFAULT_OPTION = "good-vid"
 MDIA_DLD_DEFAULT_THREADS = 4
 
@@ -259,7 +261,7 @@ def run_git_commit_and_push(message: str):
             f"{MDIA_WARNING_FLAG_MISSING} - Lệnh git commit yêu cầu cờ -m 'thông điệp'"
         )
 
-    script_path = get_script_path("system-codes/media_studio_git.py")
+    script_path = get_script_path("features/system/media_studio_git.py")
     subprocess.run([sys.executable, script_path, "commit", message])
     sys.exit(0)
 
@@ -349,7 +351,7 @@ def main():
             )
             sys.exit(1)
 
-        script_path = get_script_path("useful-codes/print_feature_description.py")
+        script_path = get_script_path("features/useful/print_feature_description.py")
         run_cmd = [sys.executable, script_path, "--type", cmd_type]
         if cmd_action:
             run_cmd.extend(["--action", cmd_action])
@@ -457,6 +459,8 @@ def main():
                 MDIA_DLD_ACTION_BILIBILI,
                 MDIA_DLD_ACTION_BILI,
                 MDIA_DLD_ACTION_BILILI,
+                MDIA_DLD_ACTION_SOUNDCLOUD,
+                MDIA_DLD_ACTION_SPOTIFY,
             ]
             if cmd_action in valid_actions:
                 run_downloader(

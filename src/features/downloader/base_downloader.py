@@ -199,6 +199,11 @@ class BaseDownloader:
         """Xử lý ngoại lệ, in ra thông báo dễ hiểu cho người dùng."""
         print("-" * 50)
         print(f">>> LỖI: Quá trình tải bằng yt-dlp thất bại (Mã lỗi {e.returncode}).")
+        if self.platform_name.lower() == "douyin":
+            print("Ghi chu rieng cho Douyin:")
+            print("  - Neu log bao 'Fresh cookies are needed' du da truyen --cookies, day thuong la loi extractor/anti-bot cua Douyin trong yt-dlp, khong chac la file cookie sai.")
+            print("  - Hay mo dung link video trong browser, refresh den khi xem duoc, export cookies lai ngay sau do, roi chay lai lenh.")
+            print("  - Neu van loi, thu cap nhat yt-dlp len nightly/master vi stable co the chua bat kip thay doi cua Douyin.")
         print("Gợi ý khắc phục:")
         print("  - Xác minh xem URL có trỏ đến nội dung hợp lệ không.")
         print(

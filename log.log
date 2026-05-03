@@ -1,0 +1,7 @@
+PS D:\D-Documents\TOOLs\media-studio> mda dld spotify "https://open.spotify.com/track/5vNRhkKd0yEAg8suGBpjeY?si=2d9666bcc00249c6"
+[INFO] Spotify là nguồn audio; đang dùng spotDL để tải nhạc.
+[Spotify] Đang bắt đầu tải audio...
+URL: https://open.spotify.com/track/5vNRhkKd0yEAg8suGBpjeY?si=2d9666bcc00249c6
+spotDL threads: 4
+Processing query: https://open.spotify.com/track/5vNRhkKd0yEAg8suGBpjeY?si=2d9666bcc00249c6
+Your application has reached a rate/request limit. Retry will occur after: 86400 s

@@ -10,6 +10,8 @@ from platform_downloaders import (
     TiktokDownloader,
     DouyinDownloader,
     BilibiliDownloader,
+    SoundCloudDownloader,
+    SpotifyDownloader,
 )
 
 DEFAULT_DOWNLOAD_OPTION = "good-vid"
@@ -26,7 +28,7 @@ def main():
     parser.add_argument(
         "platform",
         type=str,
-        help="Nền tảng (ytb, ytb-music, fb, insta, tiktok, douyin, bilibili, bili, bilili)",
+        help="Nền tảng (ytb, ytb-music, fb, insta, tiktok, douyin, bilibili, bili, bilili, soundcloud, spotify)",
     )
     parser.add_argument("url", type=str, help="URL video cần tải")
     parser.add_argument(
@@ -84,6 +86,8 @@ def main():
         "bilibili": BilibiliDownloader,
         "bili": BilibiliDownloader,
         "bilili": BilibiliDownloader,
+        "soundcloud": SoundCloudDownloader,
+        "spotify": SpotifyDownloader,
     }
 
     if platform not in downloaders_map:

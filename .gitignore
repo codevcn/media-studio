@@ -2,3 +2,4 @@ __pycache__
 .venv
 src/data
 data
+src/for-outside/export-cookies/*cookies*.txt

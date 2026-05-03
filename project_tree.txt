@@ -1,42 +1,54 @@
-Tree view of: D:\D-Apps\For-Personal\media-studio
+Tree view of: D:\D-Documents\TOOLs\media-studio
 
+├── .env
 ├── .gitignore
+├── ARCHITECTURE.md
+├── README.md
 ├── data
 │   ├── audio
+│   ├── credentials
+│   │   └── douyin-cookies-20260502-201939.txt
 │   ├── image
 │   └── video
 │       ├── input
 │       │   └── input_video.mp4
 │       └── output
-│           └── output_video.mp4
-├── extract.cmd
 ├── ins.cmd
+├── log.log
+├── mda.cmd
 ├── note.md
-├── pler.cmd
 ├── print_project_tree.py
-├── print_video_metadata.py
 ├── project_tree.txt
 ├── requirements.txt
-├── slice.cmd
 └── src
     ├── apps
     │   └── video_player
     │       └── video_player.py
     ├── configs
     │   └── configs.json
+    ├── contents
+    │   ├── app_features.yml
+    │   └── help.txt
     ├── features
     │   ├── audio
-    │   │   └── extract_audio
-    │   │       └── extract_audio.py
+    │   │   └── extract_audio.py
+    │   ├── downloader
+    │   │   ├── base_downloader.py
+    │   │   ├── platform_downloaders.py
+    │   │   └── run_downloader.py
     │   ├── image
-    │   │   └── image_transformer
-    │   │       └── flip_image.py
+    │   │   └── flip_image.py
     │   ├── media
+    │   │   ├── part_media_by_size.py
+    │   │   ├── part_media_by_time.py
     │   │   └── slice_media.py
+    │   ├── system
+    │   │   └── media_studio_git.py
+    │   ├── useful
+    │   │   └── print_feature_description.py
     │   └── video
-    │       └── video_watermark_remover
-    │           ├── clip_2phut_dau.mp4
-    │           ├── clip_2phut_dau_nologo.mp4
-    │           └── video_watermark_remover.py
+    │       ├── extract_frames.py
+    │       └── video_watermark_remover.py
+    ├── main.py
     └── utils
         └── helpers.py

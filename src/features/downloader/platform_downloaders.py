@@ -1,4 +1,8 @@
-from base_downloader import BaseDownloader
+import subprocess
+import sys
+from pathlib import Path
+
+from base_downloader import BaseDownloader, DEFAULT_DOWNLOAD_OPTION, ensure_utf8_stdout
 
 class YoutubeDownloader(BaseDownloader):
     def __init__(self, url: str, option: str, filename: str | None = None, folder: str | None = None, format_ext: str | None = None, aria2_threads: int = 4, cookies: str | None = None, cookies_from_browser: str | None = None):
@@ -58,3 +62,102 @@ class DouyinDownloader(BaseDownloader):
 class BilibiliDownloader(BaseDownloader):
     def __init__(self, url: str, option: str, filename: str | None = None, folder: str | None = None, format_ext: str | None = None, aria2_threads: int = 4, cookies: str | None = None, cookies_from_browser: str | None = None):
         super().__init__("Bilibili", url, option, filename, folder, format_ext, aria2_threads, cookies, cookies_from_browser)
+
+class SoundCloudDownloader(BaseDownloader):
+    def __init__(self, url: str, option: str, filename: str | None = None, folder: str | None = None, format_ext: str | None = None, aria2_threads: int = 4, cookies: str | None = None, cookies_from_browser: str | None = None):
+        super().__init__("SoundCloud", url, option, filename, folder, format_ext, aria2_threads, cookies, cookies_from_browser)
+
+    def set_good_video_options(self, cmd: list):
+        # SoundCloud is audio-first; keep good-vid as a practical audio fallback.
+        self.set_audio_options(cmd)
+
+    def set_best_video_options(self, cmd: list):
+        self.set_audio_options(cmd)
+
+class SpotifyDownloader:
+    VALID_AUDIO_OPTIONS = {"audio", "good-vid", "good-video", "best-vid", "best-video"}
+
+    def __init__(self, url: str, option: str, filename: str | None = None, folder: str | None = None, format_ext: str | None = None, aria2_threads: int = 4, cookies: str | None = None, cookies_from_browser: str | None = None):
+        self.platform_name = "Spotify"
+        self.url = url
+        self.option = option or DEFAULT_DOWNLOAD_OPTION
+        self.filename = filename
+        self.folder = folder
+        self.format_ext = (format_ext or "mp3").lower()
+        self.threads = max(1, int(aria2_threads or 4))
+        self.cookies = cookies
+        self.cookies_from_browser = cookies_from_browser
+
+    def download(self):
+        ensure_utf8_stdout()
+
+        if self.option == "sub":
+            print(">>> Lỗi: Spotify không hỗ trợ tải phụ đề. Vui lòng dùng option audio.")
+            sys.exit(1)
+        if self.option not in self.VALID_AUDIO_OPTIONS:
+            print(">>> Lỗi: Option Spotify hợp lệ: audio. Có thể bỏ qua option để dùng mặc định.")
+            sys.exit(1)
+
+        if self.option != "audio":
+            print("[INFO] Spotify là nguồn audio; đang dùng spotDL để tải nhạc.")
+
+        cmd = self.build_command()
+        print(f"[{self.platform_name}] Đang bắt đầu tải audio...")
+        print(f"URL: {self.url}")
+        print(f"spotDL threads: {self.threads}")
+
+        try:
+            subprocess.run(cmd, check=True)
+            print("-" * 50)
+            print(">>> Hoàn tất tải xuống Spotify thành công!")
+        except FileNotFoundError:
+            print(">>> Lỗi hệ thống: Không tìm thấy lệnh 'spotdl'.")
+            print("Vui lòng cài spotDL như CLI riêng, ví dụ:")
+            print("  python -m pip install --user pipx")
+            print("  python -m pipx ensurepath")
+            print("  python -m pipx install spotdl")
+            print("Không nên cài spotDL vào requirements chung vì dependency của spotDL có thể xung đột với package khác.")
+            sys.exit(1)
+        except subprocess.CalledProcessError as e:
+            print("-" * 50)
+            print(f">>> LỖI: Quá trình tải bằng spotDL thất bại (Mã lỗi {e.returncode}).")
+            print("Gợi ý khắc phục:")
+            print("  - Kiểm tra URL Spotify track/album/playlist/artist có public và hợp lệ không.")
+            print("  - SpotDL tải audio bằng nguồn khớp từ YouTube/YouTube Music, nên kết quả phụ thuộc khả năng tìm thấy bản tương ứng.")
+            print("  - Nếu cần cookie YouTube Music, dùng --cookies \"D:\\path\\cookies.txt\".")
+            print("-" * 50)
+            sys.exit(1)
+
+    def build_command(self) -> list[str]:
+        cmd = [
+            "spotdl",
+            "download",
+            self.url,
+            "--format",
+            self.format_ext,
+            "--threads",
+            str(self.threads),
+        ]
+
+        output_template = self._build_output_template()
+        if output_template:
+            cmd.extend(["--output", output_template])
+
+        if self.cookies:
+            cmd.extend(["--cookie-file", self.cookies])
+        if self.cookies_from_browser:
+            cmd.extend(["--yt-dlp-args", f"--cookies-from-browser {self.cookies_from_browser}"])
+
+        return cmd
+
+    def _build_output_template(self) -> str | None:
+        output_name = "{artists} - {title}.{output-ext}"
+        if self.filename:
+            filename_path = Path(self.filename)
+            stem = str(filename_path.with_suffix("")) if filename_path.suffix else self.filename
+            output_name = f"{stem}.{{output-ext}}"
+
+        if self.folder:
+            return str(Path(self.folder) / output_name)
+
+        return output_name

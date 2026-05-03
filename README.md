@@ -1,61 +1,146 @@
 # Media Studio CLI (mda)
 
-Media Studio là một tập hợp các công cụ dòng lệnh (CLI) và ứng dụng GUI mạnh mẽ chuyên dùng để xử lý video, âm thanh, và hình ảnh.
+Media Studio là bộ công cụ CLI và GUI cá nhân để xử lý video, âm thanh, hình ảnh, media file và tải nội dung đa nền tảng.
 
-## 🚀 Tính năng nổi bật
+## Tính Năng
 
-### 1. Ứng dụng GUI: Trình phát Video Kép
+### App
 
-- Lệnh: `mda app player`
-- Giao diện người dùng được xây dựng bằng PySide6 cho phép so sánh song song hai video (ví dụ: video gốc và video đã xử lý).
-- Hỗ trợ cuộn danh sách (sidebar) các cặp video tự động phát hiện trong thư mục dữ liệu, cùng tổ hợp phím tắt đa dạng để dễ dàng theo dõi.
+- `mda app player`: mở trình phát video kép bằng PySide6 để so sánh hai video song song.
+- App video player quét danh sách video theo cặp input/output và hỗ trợ phím tắt, tua, chỉnh âm lượng, chọn nguồn audio.
 
-### 2. Xử lý Video
+### Video
 
-- **Xóa Watermark/Logo (`mda video rm-logo`)**: Sử dụng công nghệ xử lý của FFmpeg để xóa logo hoặc watermark trên video dựa vào tọa độ chính xác.
-- **Trích xuất Khung hình (`mda video frames`)**: Bóc tách video ra dưới dạng chuỗi các ảnh PNG chất lượng cao (lossless) theo khoảng giãn cách cố định (ví dụ: 100ms, 2s).
+- `mda video rm-logo <input_path> <x,y,w,h> [output_path]`: xóa watermark/logo bằng FFmpeg `delogo`.
+- `mda video frames <input_path> <gap_time> [limit]`: trích xuất frame PNG theo khoảng thời gian, ví dụ `5s`, `200ms`, `2m`.
 
-### 3. Xử lý Âm Thanh
+### Audio
 
-- **Tách Audio (`mda audio extract`)**: Tách nhanh âm thanh ra khỏi video và lưu trữ dưới định dạng `WAV` (không suy hao) hoặc `MP3` chất lượng.
+- `mda audio extract <input_path> <output_path>`: tách âm thanh từ video sang `.wav` hoặc `.mp3`.
 
-### 4. Chia nhỏ Media (Video / Audio) - Xử lý cực nhanh
+### Image
 
-- **Chia theo dung lượng (`mda media part-size`)**: Tự động tính toán bitrate để chia nhỏ một tệp media thành các phần con với kích thước (MB) sát với yêu cầu nhất. Quá trình chia thực hiện thông qua Stream Copy không encode lại, vì vậy hoạt động với tốc độ chớp nhoáng.
-- **Chia theo thời lượng (`mda media part-time`)**: Cắt liên hoàn tệp dài thành các đoạn với thời lượng cho trước (ví dụ: 30s/phần).
+- `mda image flip <input_path> <horizontal|vertical> [output_path]`: lật ảnh ngang hoặc dọc bằng Pillow.
 
-### 5. Tải xuống đa nền tảng (Downloader)
+### Media
 
-- **Tải Video/Audio (`mda dld <platform>`)**: Hỗ trợ tải nội dung đa phương tiện từ YouTube, YouTube Music, Facebook, Instagram, TikTok, Douyin, Bilibili bằng `yt-dlp`.
-- Cung cấp tùy chọn tải linh hoạt: chất lượng cao nhất (`best-vid`), chất lượng khá (`good-vid`), chỉ âm thanh (`audio`), hoặc chỉ tải phụ đề (`sub`).
-- Nếu không truyền tùy chọn sau URL, mặc định dùng `good-vid`; vẫn hỗ trợ tuỳ chỉnh tên file (`--filename`) và thư mục đích (`--folder`).
-- Tăng tốc tải bằng `aria2c`; dùng `--threads` hoặc `--aria2-threads` để chỉnh số luồng tải song song, mặc định là `4`.
-- Hỗ trợ cookie cho các nền tảng yêu cầu xác minh qua `--cookies-from-browser chrome|edge|firefox` hoặc `--cookies <cookies.txt>`; riêng Douyin sẽ tự thử cookies từ `chrome`, `edge`, `firefox` nếu bạn không truyền cookie thủ công.
+- `mda media slice <input_path> <start-end> [output_filename]`: cắt một đoạn audio/video, ví dụ `00:10-01:22`.
+- `mda media part-size <input_path> <size_mb> [limit]`: chia file media theo dung lượng mục tiêu.
+- `mda media part-time <input_path> <duration> [limit]`: chia file media theo thời lượng, ví dụ `20s`, `3m`, `3p`.
 
-### 6. Tiện ích Phụ Trợ
+### Downloader
 
-- Lật ảnh ngang/dọc qua lệnh `mda image flip <absolute_input_path> <horizontal|vertical> [output_path]`.
-- Mở nhanh Workspace trong Editor qua lệnh `mda open`.
-- Tự động hóa quá trình đóng gói Git qua lệnh `mda git commit`.
+- `mda dld <platform> <url> [option] [--filename] [--folder] [--format] [--threads] [--cookies | --cookies-from-browser]`
+- Các platform dùng `yt-dlp` + `aria2c`: `ytb`, `ytb-music`, `fb`, `insta`, `tiktok`, `douyin`, `bilibili`, `bili`, `bilili`, `soundcloud`.
+- `spotify` dùng `spotDL` và chỉ hỗ trợ tải audio từ link track/album/playlist/artist.
+- Option: `best-vid`, `good-vid`, `audio`, `sub`; mặc định là `good-vid`.
+- Douyin tự thử cookies từ `chrome`, `edge`, `firefox` nếu không truyền cookie thủ công.
 
-## 🛠 Yêu cầu hệ thống
-
-- **Python 3.x**: Đã cài đặt các thư viện trong danh sách `requirements.txt`.
-- **FFmpeg**: Yêu cầu bắt buộc cài đặt và trỏ biến môi trường `PATH` nhằm thực hiện mọi thao tác giải mã/mã hóa đa phương tiện.
-- **aria2**: Cần có lệnh `aria2c` trong `PATH` để tăng tốc tải xuống cho nhóm lệnh `dld`.
-
-## 📁 Cấu trúc lưu trữ dữ liệu
-
-Theo chuẩn mực, bạn nên copy các tệp đa phương tiện (video đầu vào, kết quả xuất) vào hai thư mục sau:
-
-- Thư mục Input: `src/data/media/input/`
-- Thư mục Output: `src/data/media/output/`
-
-## 💡 Tra cứu Thêm
-
-Sử dụng cờ `--des` kết hợp khai báo tham số loại tác vụ để tra cứu thông tin chi tiết các tham số cần thiết khi chạy. Ví dụ:
+Ví dụ:
 
 ```bash
-mda --des
+mda dld ytb "https://youtube.com/watch?v=..." good-vid --threads 8
+mda dld soundcloud "https://soundcloud.com/artist/track" audio --format mp3
+mda dld spotify "https://open.spotify.com/playlist/..." audio --folder "D:\Music" --format mp3
+```
+
+### Tiện Ích
+
+- `mda open`: mở project trong VS Code.
+- `mda open -a`: mở project trong Antigravity IDE.
+- `mda open -f`: mở thư mục project trong File Explorer.
+- `mda git commit -m "<message>"`: chạy helper commit/push.
+- `mda <type> <action> --des`: in mô tả chi tiết từ catalog `src/contents/app_features.yml`.
+
+## Yêu Cầu
+
+- Python 3.x.
+- Cài dependency Python chính:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+- FFmpeg trong `PATH` cho các tính năng xử lý audio/video/media.
+- `aria2c` trong `PATH` cho downloader.
+- `spotDL` là dependency tùy chọn cho `mda dld spotify`; nên cài tách biệt bằng `pipx` để tránh xung đột dependency với môi trường Python chính:
+
+```bash
+python -m pip install --user pipx
+python -m pipx ensurepath
+python -m pipx install spotdl
+```
+
+Sau khi `ensurepath`, mở terminal mới để PATH có hiệu lực.
+
+## Cấu Trúc Project Hiện Tại
+
+```text
+media-studio/
+├── data/
+│   ├── audio/
+│   ├── credentials/
+│   ├── image/
+│   └── video/
+│       ├── input/
+│       └── output/
+├── src/
+│   ├── apps/
+│   │   └── video_player/
+│   ├── configs/
+│   ├── contents/
+│   ├── features/
+│   │   ├── audio/
+│   │   ├── downloader/
+│   │   ├── image/
+│   │   ├── media/
+│   │   ├── system/
+│   │   ├── useful/
+│   │   └── video/
+│   ├── utils/
+│   └── main.py
+├── mda.cmd
+├── ins.cmd
+├── requirements.txt
+├── ARCHITECTURE.md
+└── README.md
+```
+
+## Thư Mục Dữ Liệu
+
+Cấu trúc dữ liệu đã được chuyển ra thư mục `data/` ở root project:
+
+- Video input: `data/video/input/`
+- Video output: `data/video/output/`
+- Audio: `data/audio/`
+- Image: `data/image/`
+- Credentials/cookies: `data/credentials/`
+
+Ví dụ cookie Douyin có thể đặt trong `data/credentials/` và truyền qua:
+
+```bash
+mda dld douyin "https://v.douyin.com/..." --cookies "data\credentials\cookies.txt"
+```
+
+## Cấu Trúc Source
+
+- `src/main.py`: CLI dispatcher trung tâm.
+- `src/apps/video_player/`: app GUI phát và so sánh video.
+- `src/features/audio/`: tính năng audio.
+- `src/features/video/`: tính năng video.
+- `src/features/image/`: tính năng image.
+- `src/features/media/`: cắt/chia file media.
+- `src/features/downloader/`: downloader đa nền tảng.
+- `src/features/system/`: helper hệ thống, hiện có `media_studio_git.py`.
+- `src/features/useful/`: helper tiện ích, hiện có `print_feature_description.py`.
+- `src/contents/`: help text và catalog mô tả tính năng.
+- `src/configs/`: cấu hình JSON.
+- `src/utils/`: helper dùng chung.
+
+## Tra Cứu Nhanh
+
+```bash
 mda --help
+mda dld --des
+mda video frames --des
 ```
