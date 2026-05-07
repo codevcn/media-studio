@@ -1,0 +1,3 @@
+- douyin download còn phải cần cookies
+- spotify còn phải cần key (credentials)
+- tiktok download còn dính watermark
