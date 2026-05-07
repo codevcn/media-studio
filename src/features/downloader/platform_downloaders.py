@@ -124,6 +124,15 @@ class InstagramDownloader(BaseDownloader):
 
 
 class TiktokDownloader(BaseDownloader):
+    """
+    Downloader TikTok với cơ chế ưu tiên tải video không watermark.
+    Thử format `download_addr-0` (no-watermark) trước.
+    Nếu thất bại, tự động fallback sang luồng tải thường (có watermark).
+    """
+
+    # Các option video sẽ được thử tải no-watermark trước
+    VIDEO_OPTIONS = {"best-video", "best-vid", "good-video", "good-vid"}
+
     def __init__(
         self,
         url: str,
@@ -147,10 +156,64 @@ class TiktokDownloader(BaseDownloader):
             cookies_from_browser,
         )
 
-    def set_good_video_options(self, cmd: list):
-        # Tiktok hầu hết không tách luồng riêng, tải 'b' là đủ
-        # nhưng vẫn giữ chuẩn chung
-        super().set_good_video_options(cmd)
+    def download(self):
+        ensure_utf8_stdout()
+
+        # Chỉ thử no-watermark khi tải video, không áp dụng cho audio/sub
+        if self.option in self.VIDEO_OPTIONS:
+            print(f"[{self.platform_name}] Đang thử tải video không watermark...")
+            nw_cmd = self._build_no_watermark_cmd()
+            try:
+                subprocess.run(nw_cmd, check=True)
+                print("-" * 50)
+                print(">>> Hoàn tất tải video TikTok không watermark!")
+                return
+            except subprocess.CalledProcessError:
+                print("-" * 50)
+                print(
+                    ">>> CẢNH BÁO: Không thể tải video không watermark. "
+                    "Đang fallback sang phiên bản có watermark..."
+                )
+                print("-" * 50)
+            except FileNotFoundError:
+                print(
+                    ">>> Lỗi hệ thống: Không tìm thấy 'yt-dlp' hoặc 'aria2c' trên máy tính."
+                )
+                sys.exit(1)
+
+        # Fallback: tải bình thường qua BaseDownloader (có thể kèm watermark)
+        super().download()
+
+    def _build_no_watermark_cmd(self) -> list[str]:
+        """Xây dựng lệnh yt-dlp nhắm vào format no-watermark của TikTok."""
+        cmd = ["yt-dlp"]
+
+        # Format download_addr-0 là bản không watermark của TikTok
+        cmd.extend(["-f", "download_addr-0"])
+
+        # Áp dụng merge format nếu user chỉ định --format
+        self._apply_video_format(cmd)
+
+        # Output template
+        output_template = "%(title)s.%(ext)s"
+        if self.filename:
+            output_template = f"{self.filename}.%(ext)s"
+        cmd.extend(["-o", output_template])
+
+        # Thư mục đích
+        if self.folder:
+            cmd.extend(["-P", self.folder])
+
+        # Cookies
+        self.apply_cookie_options(cmd)
+
+        # Tăng tốc bằng aria2
+        self.apply_aria2_options(cmd)
+
+        # URL
+        cmd.append(self.url)
+
+        return cmd
 
 
 

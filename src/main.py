@@ -29,6 +29,7 @@ MDIA_IMAGE_FLIP_HORIZONTAL = "horizontal"
 MDIA_IMAGE_FLIP_VERTICAL = "vertical"
 MDIA_GIT_ACTION_COMMIT = "commit"
 
+# Downloader actions
 MDIA_DLD_ACTION_YTB = "ytb"
 MDIA_DLD_ACTION_YTB_MUSIC = "ytb-music"
 MDIA_DLD_ACTION_FB = "fb"
@@ -217,11 +218,11 @@ def run_downloader(
     sys.exit(0)
 
 
-def run_douyin_advanced(url: str, folder: str | None = None, mode: str | None = None, threads: int = 5):
+def run_douyin_advanced(
+    url: str, folder: str | None = None, mode: str | None = None, threads: int = 5
+):
     if not url:
-        raise Exception(
-            f"{MDIA_WARNING_ACTION_MISSING} - Cần truyền URL Douyin."
-        )
+        raise Exception(f"{MDIA_WARNING_ACTION_MISSING} - Cần truyền URL Douyin.")
 
     script_path = get_script_path("features/downloader/douyin_downloader.py")
     cmd = [sys.executable, script_path, url]
@@ -234,6 +235,8 @@ def run_douyin_advanced(url: str, folder: str | None = None, mode: str | None = 
 
     subprocess.run(cmd)
     sys.exit(0)
+
+
 # --- Khối Dispatcher (__main__) ---
 def print_help():
     help_path = get_content_path("help.txt")
@@ -476,7 +479,11 @@ def main():
             ]
             if cmd_action == MDIA_DLD_ACTION_DOUYIN:
                 # option (cmd_extra) có thể được coi như mode
-                mode = cmd_extra if cmd_extra and cmd_extra != MDIA_DLD_DEFAULT_OPTION else None
+                mode = (
+                    cmd_extra
+                    if cmd_extra and cmd_extra != MDIA_DLD_DEFAULT_OPTION
+                    else None
+                )
                 run_douyin_advanced(cmd_value, args.folder, mode, args.threads)
             elif cmd_action in valid_actions:
                 run_downloader(

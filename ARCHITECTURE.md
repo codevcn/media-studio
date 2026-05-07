@@ -9,7 +9,7 @@ Media Studio là một bộ công cụ cá nhân để:
 - Gom nhiều thao tác media vào một CLI ngắn: `mda`.
 - Điều phối lệnh từ một dispatcher trung tâm.
 - Tách mỗi nhóm nghiệp vụ thành script hoặc module độc lập.
-- Dùng các tool đã ổn định như FFmpeg, yt-dlp, aria2c và spotDL thay vì tự viết lại logic domain lớn.
+- Dùng các tool đã ổn định như FFmpeg, yt-dlp, aria2c, spotDL và jiji262/douyin-downloader thay vì tự viết lại logic domain lớn.
 - Giữ dữ liệu input/output, cookies và tài liệu nghiên cứu tách khỏi source code.
 
 ## 2. Luồng Tổng Thể
@@ -31,7 +31,8 @@ argparse + dispatcher
   +-- audio    -> src/features/audio/*.py
   +-- image    -> src/features/image/*.py
   +-- media    -> src/features/media/*.py
-  +-- dld      -> src/features/downloader/run_downloader.py
+  +-- dld      -> src/features/downloader/run_downloader.py  (yt-dlp platforms)
+  |              src/features/downloader/douyin_downloader.py (douyin riêng)
   +-- open     -> editor/File Explorer helper
   +-- git      -> src/features/system/_media_studio_git.py
   +-- --des    -> src/features/system/_print_feature_description.py
@@ -43,6 +44,7 @@ Nguyên tắc chính: `src/main.py` chỉ parse, validate cấp CLI và gọi sc
 
 ```text
 media-studio/
+├── .env                          # Credentials (Spotify, Douyin cookies)
 ├── data/
 │   ├── audio/
 │   ├── credentials/
@@ -58,6 +60,8 @@ media-studio/
 │   │   └── video_player/
 │   ├── configs/
 │   ├── contents/
+│   ├── external/
+│   │   └── douyin-downloader/    # Git submodule (jiji262/douyin-downloader)
 │   ├── features/
 │   │   ├── audio/
 │   │   ├── downloader/
@@ -79,21 +83,23 @@ media-studio/
 
 | Khu vực | Vai trò |
 | --- | --- |
+| `.env` | Credentials nhạy cảm: Spotify API keys, Douyin cookies. Không commit lên remote. |
 | `mda.cmd` | Wrapper Windows gọi `python src/main.py %*`. |
 | `ins.cmd` | Cài dependency Python từ `requirements.txt`. |
 | `data/` | Dữ liệu runtime: media input/output, ảnh, audio, cookie/credential. |
 | `doc/` | Ghi chú nghiên cứu và decision log cho các tích hợp đặc biệt. |
 | `src/main.py` | CLI dispatcher trung tâm. |
 | `src/apps/` | Ứng dụng GUI. Hiện có video player kép. |
+| `src/external/` | Công cụ bên thứ ba dạng git submodule (hiện có `douyin-downloader`). |
 | `src/features/audio/` | Script xử lý audio. |
 | `src/features/video/` | Script xử lý video. |
 | `src/features/image/` | Script xử lý image. |
 | `src/features/media/` | Script cắt/chia file media dùng chung cho audio/video. |
-| `src/features/downloader/` | Downloader đa nền tảng. |
+| `src/features/downloader/` | Downloader đa nền tảng (yt-dlp, spotDL, douyin wrapper). |
 | `src/features/system/` | Helper hệ thống, ví dụ git commit/push. |
 | `src/features/useful/` | Helper tiện ích, ví dụ in mô tả tính năng từ YAML. |
 | `src/contents/` | Nội dung tĩnh cho help và catalog feature. |
-| `src/configs/` | Config JSON. |
+| `src/configs/` | Config đường dẫn dự án. |
 | `src/utils/` | Helper dùng chung. |
 
 ## 5. CLI Grammar
@@ -142,13 +148,14 @@ Các handler không nên chứa logic xử lý media nặng. Ví dụ `run_media
 
 ## 7. Downloader Architecture
 
-Downloader có 3 file chính:
+Downloader có 4 file chính:
 
 ```text
 src/features/downloader/
 ├── base_downloader.py
 ├── platform_downloaders.py
-└── run_downloader.py
+├── run_downloader.py
+└── douyin_downloader.py
 ```
 
 ### `run_downloader.py`
@@ -159,12 +166,14 @@ Vai trò:
 - Map platform string sang class downloader.
 - Khởi tạo downloader và gọi `.download()`.
 
-Platform hiện có:
+Platform hiện có (qua yt-dlp / spotDL):
 
 ```text
-ytb, ytb-music, fb, insta, tiktok, douyin,
-bilibili, bili, bilili, soundcloud, spotify
+ytb, ytb-music, fb, insta, tiktok,
+bilibili, bili, bilili, soundcloud, scloud, spot
 ```
+
+Lưu ý: `douyin` được điều phối riêng từ `main.py` sang `douyin_downloader.py`, không đi qua `run_downloader.py`.
 
 ### `base_downloader.py`
 
@@ -188,9 +197,19 @@ Vai trò:
 Các điểm đặc biệt:
 
 - `FacebookDownloader` override good video format để fallback ổn hơn.
-- `DouyinDownloader` tự thử cookies từ `chrome`, `edge`, `firefox` nếu user không truyền cookie.
+- `TiktokDownloader` override `download()` để thử tải bản **no-watermark** (format `download_addr-0`) trước. Nếu thất bại, in cảnh báo và fallback sang bản có watermark qua `BaseDownloader`.
 - `SoundCloudDownloader` dùng `yt-dlp`, nhưng `good-vid`/`best-vid` được fallback sang audio vì SoundCloud là audio-first.
-- `SpotifyDownloader` không dùng `yt-dlp` trực tiếp, mà gọi `spotdl download`.
+- `SpotifyDownloader` không dùng `yt-dlp` trực tiếp, mà gọi `spotdl download`. Yêu cầu `SPOTIFY_CLIENT_ID` và `SPOTIFY_CLIENT_SECRET` trong `.env`.
+
+### `douyin_downloader.py`
+
+Vai trò:
+
+- Wrapper chuyên cho Douyin, gọi submodule `jiji262/douyin-downloader` (`src/external/douyin-downloader/run.py`).
+- Đọc 5 biến cookie Douyin từ `.env`, kiểm tra đủ hay chưa. Nếu thiếu: in hướng dẫn lấy cookie từ trình duyệt và dừng.
+- Nếu đủ cookie: inject vào `config.yml` của submodule rồi chạy.
+- Hỗ trợ batch download qua `--mode` (post, like, mix, music, favorites).
+- Thư mục lưu mặc định là thư mục hiện tại (CWD).
 
 ## 8. Spotify Và spotDL
 
@@ -215,6 +234,24 @@ Tài liệu chi tiết nằm ở:
 
 ```text
 doc/spotdl-spotify-downloader.md
+```
+
+## 8b. Douyin Và jiji262/douyin-downloader
+
+Douyin được tách thành luồng riêng vì `yt-dlp` không ổn định cho Douyin (anti-bot mạnh). Thay vào đó dùng công cụ chuyên dụng `jiji262/douyin-downloader` được tích hợp dạng git submodule.
+
+Quy ước hiện tại:
+
+- `mda dld douyin ...` đi riêng qua `src/features/downloader/douyin_downloader.py`, không qua `run_downloader.py`.
+- Bắt buộc phải có 5 biến cookie Douyin trong `.env` (`DOUYIN_MS_TOKEN`, `DOUYIN_TTWID`, `DOUYIN_ODIN_TT`, `DOUYIN_PASSPORT_CSRF_TOKEN`, `DOUYIN_SID_GUARD`).
+- Hỗ trợ batch download (tải toàn bộ profile/collection) qua `--mode post|like|mix|music|favorites`.
+- Submodule yêu cầu cài dependency riêng (bao gồm `playwright` và trình duyệt Chromium).
+- Sau khi clone project lần đầu cần chạy `git submodule update --init --recursive`.
+
+Tài liệu tích hợp chi tiết nằm ở:
+
+```text
+doc/tích hợp douyin downloader tool.md
 ```
 
 ## 9. Data Architecture
@@ -292,9 +329,11 @@ Khi thêm hoặc đổi command, cập nhật đồng thời:
 | --- | --- |
 | FFmpeg | Cắt, chia, encode/copy stream, tách audio, xóa logo, trích frame. |
 | ffprobe | Đọc metadata media cho chia theo dung lượng. |
-| yt-dlp | Downloader chính cho nhiều platform. |
+| yt-dlp | Downloader chính cho nhiều platform (YouTube, FB, TikTok, Bilibili...). |
 | aria2c | Tăng tốc download qua external downloader của yt-dlp. |
-| spotDL | Downloader audio cho Spotify. |
+| spotDL | Downloader audio cho Spotify (CLI optional, cài qua pipx). |
+| jiji262/douyin-downloader | Downloader chuyên Douyin (git submodule trong `src/external/`). |
+| Playwright + Chromium | Hỗ trợ anti-bot cho douyin-downloader. |
 | Git | Helper `mda git commit`. |
 
 Python packages chính trong `requirements.txt`:
@@ -308,7 +347,7 @@ PyYAML
 yt-dlp
 ```
 
-`spotDL` không nằm trong `requirements.txt`.
+`spotDL` và dependency của `douyin-downloader` không nằm trong `requirements.txt` chính.
 
 ## 13. Mở Rộng Feature
 
@@ -368,8 +407,13 @@ Các thay đổi cấu trúc quan trọng gần đây:
 - `src/system-codes/` đã được thay bằng `src/features/system/`.
 - `src/useful-codes/` đã được thay bằng `src/features/useful/`.
 - Dữ liệu runtime chuyển từ kiểu cũ `src/data/media/...` sang `data/...` ở root project.
-- Downloader thêm `soundcloud` qua `yt-dlp`.
+- Downloader thêm `soundcloud` (alias `scloud`) qua `yt-dlp`.
 - Downloader thêm `spotify` qua `spotDL`.
 - `spotDL` từng được thử đưa vào `requirements.txt` nhưng gây xung đột dependency; hiện được coi là CLI optional cài qua `pipx`.
+- `DouyinDownloader` (phiên bản yt-dlp cũ) đã bị xóa hoàn toàn. Thay thế bằng `douyin_downloader.py` wrapper gọi submodule `jiji262/douyin-downloader`.
+- Douyin được tách khỏi luồng `run_downloader.py`, có dispatcher riêng trong `main.py` (`run_douyin_advanced`).
+- Credentials (Spotify API, Douyin cookies) quản lý tập trung trong file `.env` ở root project.
+- `TiktokDownloader` nâng cấp: ưu tiên tải no-watermark (format `download_addr-0`), tự fallback sang bản có watermark nếu thất bại.
+- Thêm thư mục `src/external/` chứa git submodule. Sau khi clone cần chạy `git submodule update --init --recursive`.
 
 Khi gặp path cũ trong source hoặc config, ưu tiên cập nhật về cấu trúc hiện tại thay vì tạo lại thư mục legacy.
