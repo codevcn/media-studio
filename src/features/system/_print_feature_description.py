@@ -1,13 +1,18 @@
 import os
 import sys
 import argparse
-from dotenv import load_dotenv
 import yaml
+from colorama import init, Fore, Style
 
-load_dotenv(dotenv_path="D:/D-Documents/TOOLs/media-studio/.env")
+# Đảm bảo src directory nằm trong sys.path để import configs
+src_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
 
-ROOT_FOLDER_PATH = os.getenv("ROOT_FOLDER_PATH") or ""
-CONTENTS_FOLDER_PATH = os.getenv("CONTENTS_FOLDER_PATH") or ""
+from configs.paths import ROOT_FOLDER_PATH, CONTENTS_FOLDER_PATH
+
+init(autoreset=True)
+
 DLD_PLATFORM_ALIASES = {
     "ytb",
     "ytb-music",
@@ -76,18 +81,14 @@ def print_feature_description(cmd_type: str, cmd_action: str):
                 command_str = action.get("command", "")
 
                 if is_command_match(command_str, cmd_type, cmd_action):
-                    print(
-                        "=================================================================="
-                    )
-                    print(f"[{action.get('id')}] {action.get('title')}")
-                    print(f"Lệnh      : {action.get('command')}")
-                    print(f"Tóm tắt   : {action.get('summary')}")
-                    print(f"Chi tiết  : {action.get('details')}")
-                    print(f"Tham số   : {action.get('parameters', 'Không có')}")
-                    print(f"Yêu cầu   : {action.get('conditions')}")
-                    print(
-                        "=================================================================="
-                    )
+                    print(Fore.CYAN + Style.BRIGHT + "==================================================================")
+                    print(Fore.CYAN + Style.BRIGHT + f"[{action.get('id')}] {action.get('title')}")
+                    print(Fore.YELLOW + "Lệnh      : " + Fore.WHITE + f"{action.get('command')}")
+                    print(Fore.YELLOW + "Tóm tắt   : " + Fore.WHITE + f"{action.get('summary')}")
+                    print(Fore.YELLOW + "Chi tiết  : " + Fore.WHITE + f"{action.get('details')}")
+                    print(Fore.YELLOW + "Tham số   : " + Fore.WHITE + f"{action.get('parameters', 'Không có')}")
+                    print(Fore.YELLOW + "Yêu cầu   : " + Fore.WHITE + f"{action.get('conditions')}")
+                    print(Fore.CYAN + Style.BRIGHT + "==================================================================")
                     sys.exit(0)
 
             print(

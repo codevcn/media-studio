@@ -1,14 +1,13 @@
 import sys
 import os
 import subprocess
-from dotenv import load_dotenv
 
-env_path = "D:/D-Documents/TOOLs/media-studio/.env"
-load_dotenv(dotenv_path=env_path)
+# Đảm bảo src directory nằm trong sys.path để import configs
+src_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
 
-ROOT_FOLDER_PATH = os.getenv("ROOT_FOLDER_PATH") or os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-)
+from configs.paths import ROOT_FOLDER_PATH
 
 
 def git_commit_and_push(message: str):

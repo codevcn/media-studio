@@ -31,10 +31,10 @@ Media Studio là bộ công cụ CLI và GUI cá nhân để xử lý video, âm
 ### Downloader
 
 - `mda dld <platform> <url> [option] [--filename] [--folder] [--format] [--threads] [--cookies | --cookies-from-browser]`
-- Các platform dùng `yt-dlp` + `aria2c`: `ytb`, `ytb-music`, `fb`, `insta`, `tiktok`, `douyin`, `bilibili`, `bili`, `bilili`, `soundcloud`.
-- `spotify` dùng `spotDL` và chỉ hỗ trợ tải audio từ link track/album/playlist/artist.
-- Option: `best-vid`, `good-vid`, `audio`, `sub`; mặc định là `good-vid`.
-- Douyin tự thử cookies từ `chrome`, `edge`, `firefox` nếu không truyền cookie thủ công.
+- Các platform dùng `yt-dlp` + `aria2c`: `ytb`, `ytb-music`, `fb`, `insta`, `tiktok`, `bilibili`, `bili`, `bilili`, `soundcloud`.
+- `spotify` dùng `spotDL` và chỉ hỗ trợ tải audio từ link track/album/playlist/artist. (Yêu cầu cấu hình credentials trong `.env`).
+- `douyin` dùng module chuyên dụng `jiji262/douyin-downloader`, hỗ trợ tải no-watermark và batch profile. Truyền thêm mode thay vì option thông thường (`post`, `like`, `mix`, `music`, `favorites`). (Yêu cầu cấu hình 5 giá trị cookie trong `.env`).
+- Option yt-dlp: `best-vid`, `good-vid`, `audio`, `sub`; mặc định là `good-vid`.
 
 Ví dụ:
 
@@ -72,6 +72,28 @@ python -m pipx install spotdl
 ```
 
 Sau khi `ensurepath`, mở terminal mới để PATH có hiệu lực.
+
+## Hướng Dẫn Thiết Lập (Khi Tải Về Máy Mới)
+
+Để công cụ này hoạt động trên một máy tính mới, hãy làm theo các bước sau:
+
+1. **Cài đặt thư viện Python:**
+   Mở terminal tại thư mục gốc của dự án và chạy file `ins.cmd` hoặc gõ lệnh:
+   ```bash
+   python -m pip install -r requirements.txt
+   ```
+
+2. **Cấu hình đường dẫn dự án:**
+   Mở file `src/configs/paths.py` và sửa biến `ROOT_FOLDER_PATH` thành đường dẫn tuyệt đối trỏ tới thư mục chứa dự án này trên máy của bạn. Ví dụ:
+   ```python
+   ROOT_FOLDER_PATH = "C:/Users/YourName/Downloads/media-studio"
+   ```
+
+3. **Thiết lập lệnh `mda` toàn cục (Thêm vào PATH):**
+   - Copy đường dẫn thư mục gốc của dự án (nơi chứa file `mda.cmd`).
+   - Mở cài đặt **Environment Variables** trên Windows -> Chọn **Path** -> Bấm **Edit** -> **New** -> Dán đường dẫn vừa copy vào.
+   - Nhấn OK để lưu lại. Mở một terminal mới (hoặc CMD/PowerShell) để biến môi trường có hiệu lực.
+   - Giờ bạn có thể gõ lệnh `mda` ở bất kỳ thư mục nào trên máy tính. *(File `mda.cmd` đã được tối ưu để tự tìm đúng mã nguồn).*
 
 ## Cấu Trúc Project Hiện Tại
 

@@ -8,7 +8,6 @@ from platform_downloaders import (
     FacebookDownloader,
     InstagramDownloader,
     TiktokDownloader,
-    DouyinDownloader,
     BilibiliDownloader,
     SoundCloudDownloader,
     SpotifyDownloader,
@@ -82,12 +81,12 @@ def main():
         "fb": FacebookDownloader,
         "insta": InstagramDownloader,
         "tiktok": TiktokDownloader,
-        "douyin": DouyinDownloader,
         "bilibili": BilibiliDownloader,
         "bili": BilibiliDownloader,
         "bilili": BilibiliDownloader,
         "soundcloud": SoundCloudDownloader,
-        "spotify": SpotifyDownloader,
+        "scloud": SoundCloudDownloader,
+        "spot": SpotifyDownloader,
     }
 
     if platform not in downloaders_map:

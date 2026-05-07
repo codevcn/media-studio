@@ -1,4 +1,5 @@
 python-dotenv
+colorama
 opencv-python
 Pillow
 PySide6

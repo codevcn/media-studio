@@ -2,9 +2,8 @@ import os
 import sys
 import subprocess
 import argparse
-from dotenv import load_dotenv
 
-load_dotenv(dotenv_path="D:/D-Documents/TOOLs/media-studio/.env")
+from configs.paths import ROOT_FOLDER_PATH, CONTENTS_FOLDER_PATH
 
 # --- Constants ---
 # Types
@@ -50,11 +49,6 @@ MDIA_WARNING_TYPE_MISSING = "MISSING-TYPE"
 MDIA_WARNING_ACTION_WRONG = "WRONG-ACTION"
 MDIA_WARNING_ACTION_MISSING = "MISSING-ACTION"
 MDIA_WARNING_FLAG_MISSING = "MISSING-FLAG"
-
-ROOT_FOLDER_PATH = os.getenv("ROOT_FOLDER_PATH") or ""
-CONTENTS_FOLDER_PATH = os.getenv("CONTENTS_FOLDER_PATH") or os.path.join(
-    ROOT_FOLDER_PATH, "src", "contents"
-)
 
 
 # --- Helper Functions ---
@@ -201,7 +195,9 @@ def run_downloader(
     if threads < 1:
         raise Exception("--threads phải là số nguyên >= 1")
     if cookies and cookies_from_browser:
-        raise Exception("Chỉ dùng một trong hai flag: --cookies hoặc --cookies-from-browser")
+        raise Exception(
+            "Chỉ dùng một trong hai flag: --cookies hoặc --cookies-from-browser"
+        )
 
     script_path = get_script_path("features/downloader/run_downloader.py")
     cmd = [sys.executable, script_path, platform, url, option]
@@ -221,6 +217,23 @@ def run_downloader(
     sys.exit(0)
 
 
+def run_douyin_advanced(url: str, folder: str | None = None, mode: str | None = None, threads: int = 5):
+    if not url:
+        raise Exception(
+            f"{MDIA_WARNING_ACTION_MISSING} - Cần truyền URL Douyin."
+        )
+
+    script_path = get_script_path("features/downloader/douyin_downloader.py")
+    cmd = [sys.executable, script_path, url]
+    if folder:
+        cmd.extend(["--folder", folder])
+    if mode:
+        cmd.extend(["--mode", mode])
+    if threads:
+        cmd.extend(["--threads", str(threads)])
+
+    subprocess.run(cmd)
+    sys.exit(0)
 # --- Khối Dispatcher (__main__) ---
 def print_help():
     help_path = get_content_path("help.txt")
@@ -455,14 +468,17 @@ def main():
                 MDIA_DLD_ACTION_FB,
                 MDIA_DLD_ACTION_INSTA,
                 MDIA_DLD_ACTION_TIKTOK,
-                MDIA_DLD_ACTION_DOUYIN,
                 MDIA_DLD_ACTION_BILIBILI,
                 MDIA_DLD_ACTION_BILI,
                 MDIA_DLD_ACTION_BILILI,
                 MDIA_DLD_ACTION_SOUNDCLOUD,
                 MDIA_DLD_ACTION_SPOTIFY,
             ]
-            if cmd_action in valid_actions:
+            if cmd_action == MDIA_DLD_ACTION_DOUYIN:
+                # option (cmd_extra) có thể được coi như mode
+                mode = cmd_extra if cmd_extra and cmd_extra != MDIA_DLD_DEFAULT_OPTION else None
+                run_douyin_advanced(cmd_value, args.folder, mode, args.threads)
+            elif cmd_action in valid_actions:
                 run_downloader(
                     cmd_action,
                     cmd_value,
