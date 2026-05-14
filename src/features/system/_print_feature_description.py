@@ -87,6 +87,8 @@ def print_feature_description(cmd_type: str, cmd_action: str):
                     print(Fore.YELLOW + "Tóm tắt   : " + Fore.WHITE + f"{action.get('summary')}")
                     print(Fore.YELLOW + "Chi tiết  : " + Fore.WHITE + f"{action.get('details')}")
                     print(Fore.YELLOW + "Tham số   : " + Fore.WHITE + f"{action.get('parameters', 'Không có')}")
+                    if action.get("flags"):
+                        print(Fore.YELLOW + "Flags     : " + Fore.WHITE + f"{action.get('flags')}")
                     print(Fore.YELLOW + "Yêu cầu   : " + Fore.WHITE + f"{action.get('conditions')}")
                     print(Fore.CYAN + Style.BRIGHT + "==================================================================")
                     sys.exit(0)

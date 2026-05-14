@@ -41,6 +41,7 @@ MDIA_DLD_ACTION_BILI = "bili"
 MDIA_DLD_ACTION_BILILI = "bilili"
 MDIA_DLD_ACTION_SOUNDCLOUD = "scloud"
 MDIA_DLD_ACTION_SPOTIFY = "spot"
+MDIA_DLD_ACTION_LIST = "list"
 MDIA_DLD_DEFAULT_OPTION = "good-vid"
 MDIA_DLD_DEFAULT_THREADS = 4
 
@@ -201,7 +202,7 @@ def run_downloader(
         )
 
     script_path = get_script_path("features/downloader/run_downloader.py")
-    cmd = [sys.executable, script_path, platform, url, option]
+    cmd = [sys.executable, script_path, platform, url, "--option", option]
     if filename:
         cmd.extend(["--filename", filename])
     if folder:
@@ -332,6 +333,19 @@ def main():
     )
     parser.add_argument(
         "--format", type=str, help="Chỉ định định dạng đầu ra (dùng cho module dld)"
+    )
+    parser.add_argument(
+        "--option",
+        type=str,
+        default=MDIA_DLD_DEFAULT_OPTION,
+        help=f"Tùy chọn chất lượng tải cho yt-dlp: best-vid, good-vid, audio, sub, thumb (mặc định: {MDIA_DLD_DEFAULT_OPTION})",
+    )
+    parser.add_argument(
+        "--mode",
+        type=str,
+        choices=["post", "like", "mix", "music", "favorites"],
+        default=None,
+        help="Chế độ batch cho Douyin: post | like | mix | music | favorites",
     )
     parser.add_argument(
         "--threads",
@@ -477,19 +491,25 @@ def main():
                 MDIA_DLD_ACTION_SOUNDCLOUD,
                 MDIA_DLD_ACTION_SPOTIFY,
             ]
-            if cmd_action == MDIA_DLD_ACTION_DOUYIN:
-                # option (cmd_extra) có thể được coi như mode
-                mode = (
-                    cmd_extra
-                    if cmd_extra and cmd_extra != MDIA_DLD_DEFAULT_OPTION
-                    else None
-                )
-                run_douyin_advanced(cmd_value, args.folder, mode, args.threads)
+            if cmd_action == MDIA_DLD_ACTION_LIST:
+                print("Các nền tảng được hỗ trợ cho lệnh 'dld':")
+                print("  - ytb       : YouTube")
+                print("  - ytb-music : YouTube Music")
+                print("  - fb        : Facebook")
+                print("  - insta     : Instagram")
+                print("  - tiktok    : TikTok")
+                print("  - douyin    : Douyin")
+                print("  - bilibili  : Bilibili (alias: bili, bilili)")
+                print("  - soundcloud: SoundCloud (alias: scloud)")
+                print("  - spotify   : Spotify (alias: spot)")
+                sys.exit(0)
+            elif cmd_action == MDIA_DLD_ACTION_DOUYIN:
+                run_douyin_advanced(cmd_value, args.folder, args.mode, args.threads)
             elif cmd_action in valid_actions:
                 run_downloader(
                     cmd_action,
                     cmd_value,
-                    cmd_extra,
+                    args.option,
                     args.filename,
                     args.folder,
                     args.format,

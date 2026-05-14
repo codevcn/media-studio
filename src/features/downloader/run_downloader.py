@@ -31,10 +31,10 @@ def main():
     )
     parser.add_argument("url", type=str, help="URL video cần tải")
     parser.add_argument(
-        "option",
-        nargs="?",
+        "--option",
+        type=str,
         default=DEFAULT_DOWNLOAD_OPTION,
-        help=f"Tùy chọn tải: best-vid, good-vid, audio, sub (mặc định: {DEFAULT_DOWNLOAD_OPTION})",
+        help=f"Tùy chọn tải: best-vid, good-vid, audio, sub, thumb (mặc định: {DEFAULT_DOWNLOAD_OPTION})",
     )
     parser.add_argument("--filename", type=str, default=None, help="Tên file đầu ra")
     parser.add_argument("--folder", type=str, default=None, help="Thư mục lưu trữ")

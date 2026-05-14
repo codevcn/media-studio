@@ -48,7 +48,7 @@ class BaseDownloader:
 
         print(f"[{self.platform_name}] Đang bắt đầu tải ({self.option})...")
         print(f"URL: {self.url}")
-        if self.option != "sub":
+        if self.option not in ("sub", "thumb"):
             print(f"aria2 threads: {self.aria2_threads}")
         if len(commands) > 1:
             browsers = ", ".join(browser for browser, _ in commands if browser)
@@ -98,17 +98,34 @@ class BaseDownloader:
         cmd = ["yt-dlp"]
 
         # 1. Option mapping
-        if self.option in ("best-video", "best-vid"):
+        # Auto-detect: nếu --format là audio format nhưng --option là video → chuyển sang audio
+        AUDIO_FORMATS = {"mp3", "m4a", "wav", "flac", "opus", "vorbis", "aac", "alac"}
+        VIDEO_OPTIONS = {"best-video", "best-vid", "good-video", "good-vid"}
+        effective_option = self.option
+        if (
+            self.format_ext
+            and self.format_ext.lower() in AUDIO_FORMATS
+            and effective_option in VIDEO_OPTIONS
+        ):
+            print(
+                f">>> [INFO] --format '{self.format_ext}' là audio format. "
+                f"Tự động chuyển --option từ '{effective_option}' sang 'audio'."
+            )
+            effective_option = "audio"
+
+        if effective_option in ("best-video", "best-vid"):
             self.set_best_video_options(cmd)
-        elif self.option in ("good-video", "good-vid"):
+        elif effective_option in ("good-video", "good-vid"):
             self.set_good_video_options(cmd)
-        elif self.option == "audio":
+        elif effective_option == "audio":
             self.set_audio_options(cmd)
-        elif self.option == "sub":
+        elif effective_option == "sub":
             self.set_sub_options(cmd)
+        elif effective_option == "thumb":
+            self.set_thumb_options(cmd)
         else:
             print(
-                f">>> Lỗi: Option '{self.option}' không hợp lệ. Vui lòng chọn: best-vid, good-vid, audio, sub."
+                f">>> Lỗi: Option '{self.option}' không hợp lệ. Vui lòng chọn: best-vid, good-vid, audio, sub, thumb."
             )
             sys.exit(1)
 
@@ -126,7 +143,7 @@ class BaseDownloader:
         self.apply_cookie_options(cmd, cookies_from_browser)
 
         # 5. Tăng tốc tải bằng aria2 cho các nội dung media.
-        if self.option != "sub":
+        if self.option not in ("sub", "thumb"):
             self.apply_aria2_options(cmd)
 
         # 6. Truyền URL
@@ -194,6 +211,16 @@ class BaseDownloader:
         if sub_fmt not in valid_sub:
              print(f">>> CẢNH BÁO: yt-dlp có thể không tải được định dạng phụ đề '{sub_fmt}'. Thường dùng nhất: srt, vtt.")
         cmd.extend(["--write-subs", "--write-auto-subs", "--sub-format", sub_fmt, "--skip-download"])
+
+    def set_thumb_options(self, cmd: list):
+        """Chỉ tải ảnh bìa (thumbnail)."""
+        cmd.extend(["--write-thumbnail", "--skip-download"])
+        if self.format_ext:
+            valid_thumb = ["jpg", "png", "webp"]
+            if self.format_ext.lower() in valid_thumb:
+                cmd.extend(["--convert-thumbnails", self.format_ext.lower()])
+            else:
+                print(f">>> CẢNH BÁO: yt-dlp có thể không hỗ trợ định dạng ảnh bìa '{self.format_ext}'. Dùng mặc định: jpg/png/webp.")
 
     def handle_error(self, e: subprocess.CalledProcessError):
         """Xử lý ngoại lệ, in ra thông báo dễ hiểu cho người dùng."""

@@ -43,7 +43,9 @@ dld               :Các tính năng tải xuống từ mạng xã hội (Downloa
                   // Vd: mda media part-time "D:\video.mp4" 20s 5
 
 ## dld:
-   ytb, ytb-music, fb, insta, tiktok, bilibili, scloud, spot   :Tải nội dung từ các nền tảng tương ứng. YouTube/Facebook/Instagram/TikTok/Bilibili/SoundCloud dùng yt-dlp + aria2; Spotify dùng spotDL. Hỗ trợ alias bili/bilili cho Bilibili. Hỗ trợ option: best-vid, good-vid, audio, sub. Riêng Spotify chỉ tải audio. Nếu bỏ qua option, mặc định dùng good-vid. Dùng --threads để chỉ định số luồng tải, mặc định 4. LƯU Ý: Spotify yêu cầu cấu hình SPOTIFY_CLIENT_ID và SPOTIFY_CLIENT_SECRET trong file .env.
+   list           :Liệt kê danh sách các nền tảng đang được hỗ trợ cho lệnh dld.
+   ytb, ytb-music, fb, insta, tiktok, bilibili, scloud, spot   :Tải nội dung từ các nền tảng tương ứng. YouTube/Facebook/Instagram/TikTok/Bilibili/SoundCloud dùng yt-dlp + aria2; Spotify dùng spotDL. Hỗ trợ alias bili/bilili cho Bilibili. Hỗ trợ option: best-vid, good-vid, audio, sub, thumb. Riêng Spotify chỉ tải audio. Nếu bỏ qua option, mặc định dùng good-vid. Dùng --threads để chỉ định số luồng tải, mặc định 4. LƯU Ý: Spotify yêu cầu cấu hình SPOTIFY_CLIENT_ID và SPOTIFY_CLIENT_SECRET trong file .env.
+                  // Vd: mda dld ytb "https://youtube.com/..." best-vid --threads 6
                   // Vd: mda dld bili "https://bilibili.com/..." audio --filename "my_audio" --folder "C:\Downloads" --format "mp3" --threads 8
    douyin         :Tải Douyin bằng công cụ chuyên dụng (jiji262/douyin-downloader) hỗ trợ no-watermark, deduplication. Nhận --mode [post|like|mix|music|favorites] cho tải hàng loạt. LƯU Ý: Yêu cầu bắt buộc cấu hình 5 giá trị cookie Douyin trong file .env để không bị chặn.
                   // Vd: mda dld douyin "https://v.douyin.com/..."
