@@ -123,9 +123,11 @@ class BaseDownloader:
             self.set_sub_options(cmd)
         elif effective_option == "thumb":
             self.set_thumb_options(cmd)
+        elif effective_option == "img":
+            self.set_img_options(cmd)
         else:
             print(
-                f">>> Lỗi: Option '{self.option}' không hợp lệ. Vui lòng chọn: best-vid, good-vid, audio, sub, thumb."
+                f">>> Lỗi: Option '{self.option}' không hợp lệ. Vui lòng chọn: best-vid, good-vid, audio, sub, thumb, img."
             )
             sys.exit(1)
 
@@ -221,6 +223,11 @@ class BaseDownloader:
                 cmd.extend(["--convert-thumbnails", self.format_ext.lower()])
             else:
                 print(f">>> CẢNH BÁO: yt-dlp có thể không hỗ trợ định dạng ảnh bìa '{self.format_ext}'. Dùng mặc định: jpg/png/webp.")
+
+    def set_img_options(self, cmd: list):
+        """Tải toàn bộ ảnh có trong link."""
+        cmd.extend(["--write-all-thumbnails"])
+        cmd.extend(["-f", "bestimage/best[ext=jpg]/best[ext=png]/best[ext=webp]/bestvideo/best"])
 
     def handle_error(self, e: subprocess.CalledProcessError):
         """Xử lý ngoại lệ, in ra thông báo dễ hiểu cho người dùng."""

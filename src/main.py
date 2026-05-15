@@ -338,7 +338,7 @@ def main():
         "--option",
         type=str,
         default=MDIA_DLD_DEFAULT_OPTION,
-        help=f"Tùy chọn chất lượng tải cho yt-dlp: best-vid, good-vid, audio, sub, thumb (mặc định: {MDIA_DLD_DEFAULT_OPTION})",
+        help=f"Tùy chọn chất lượng tải cho yt-dlp: best-vid, good-vid, audio, sub, thumb, img (mặc định: {MDIA_DLD_DEFAULT_OPTION})",
     )
     parser.add_argument(
         "--mode",
