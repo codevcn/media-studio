@@ -26,8 +26,7 @@ class YoutubeDownloader(BaseDownloader):
         folder: str | None = None,
         format_ext: str | None = None,
         aria2_threads: int = 4,
-        cookies: str | None = None,
-        cookies_from_browser: str | None = None,
+        slice_time: str | None = None,
     ):
         super().__init__(
             "YouTube",
@@ -37,9 +36,15 @@ class YoutubeDownloader(BaseDownloader):
             folder,
             format_ext,
             aria2_threads,
-            cookies,
-            cookies_from_browser,
+            slice_time,
         )
+
+    def build_command(self) -> list[str]:
+        cmd = super().build_command()
+        if self.slice_time:
+            cmd.extend(["--download-sections", f"*{self.slice_time}"])
+            print(f">>> [INFO] Cắt video tải xuống từ mốc thời gian: {self.slice_time}")
+        return cmd
 
 
 class YoutubeMusicDownloader(BaseDownloader):
@@ -51,8 +56,7 @@ class YoutubeMusicDownloader(BaseDownloader):
         folder: str | None = None,
         format_ext: str | None = None,
         aria2_threads: int = 4,
-        cookies: str | None = None,
-        cookies_from_browser: str | None = None,
+        slice_time: str | None = None,
     ):
         super().__init__(
             "YouTube Music",
@@ -62,9 +66,15 @@ class YoutubeMusicDownloader(BaseDownloader):
             folder,
             format_ext,
             aria2_threads,
-            cookies,
-            cookies_from_browser,
+            slice_time,
         )
+
+    def build_command(self) -> list[str]:
+        cmd = super().build_command()
+        if self.slice_time:
+            cmd.extend(["--download-sections", f"*{self.slice_time}"])
+            print(f">>> [INFO] Cắt audio tải xuống từ mốc thời gian: {self.slice_time}")
+        return cmd
 
 
 class FacebookDownloader(BaseDownloader):
@@ -76,8 +86,7 @@ class FacebookDownloader(BaseDownloader):
         folder: str | None = None,
         format_ext: str | None = None,
         aria2_threads: int = 4,
-        cookies: str | None = None,
-        cookies_from_browser: str | None = None,
+        slice_time: str | None = None,
     ):
         super().__init__(
             "Facebook",
@@ -87,8 +96,7 @@ class FacebookDownloader(BaseDownloader):
             folder,
             format_ext,
             aria2_threads,
-            cookies,
-            cookies_from_browser,
+            slice_time,
         )
 
     def set_good_video_options(self, cmd: list):
@@ -107,8 +115,7 @@ class InstagramDownloader(BaseDownloader):
         folder: str | None = None,
         format_ext: str | None = None,
         aria2_threads: int = 4,
-        cookies: str | None = None,
-        cookies_from_browser: str | None = None,
+        slice_time: str | None = None,
     ):
         super().__init__(
             "Instagram",
@@ -118,8 +125,7 @@ class InstagramDownloader(BaseDownloader):
             folder,
             format_ext,
             aria2_threads,
-            cookies,
-            cookies_from_browser,
+            slice_time,
         )
 
 
@@ -141,8 +147,7 @@ class TiktokDownloader(BaseDownloader):
         folder: str | None = None,
         format_ext: str | None = None,
         aria2_threads: int = 4,
-        cookies: str | None = None,
-        cookies_from_browser: str | None = None,
+        slice_time: str | None = None,
     ):
         super().__init__(
             "TikTok",
@@ -152,8 +157,7 @@ class TiktokDownloader(BaseDownloader):
             folder,
             format_ext,
             aria2_threads,
-            cookies,
-            cookies_from_browser,
+            slice_time,
         )
 
     def download(self):
@@ -204,9 +208,6 @@ class TiktokDownloader(BaseDownloader):
         if self.folder:
             cmd.extend(["-P", self.folder])
 
-        # Cookies
-        self.apply_cookie_options(cmd)
-
         # Tăng tốc bằng aria2
         self.apply_aria2_options(cmd)
 
@@ -228,8 +229,7 @@ class BilibiliDownloader(BaseDownloader):
         folder: str | None = None,
         format_ext: str | None = None,
         aria2_threads: int = 4,
-        cookies: str | None = None,
-        cookies_from_browser: str | None = None,
+        slice_time: str | None = None,
     ):
         super().__init__(
             "Bilibili",
@@ -239,8 +239,7 @@ class BilibiliDownloader(BaseDownloader):
             folder,
             format_ext,
             aria2_threads,
-            cookies,
-            cookies_from_browser,
+            slice_time,
         )
 
 
@@ -253,8 +252,7 @@ class SoundCloudDownloader(BaseDownloader):
         folder: str | None = None,
         format_ext: str | None = None,
         aria2_threads: int = 4,
-        cookies: str | None = None,
-        cookies_from_browser: str | None = None,
+        slice_time: str | None = None,
     ):
         super().__init__(
             "SoundCloud",
@@ -264,8 +262,7 @@ class SoundCloudDownloader(BaseDownloader):
             folder,
             format_ext,
             aria2_threads,
-            cookies,
-            cookies_from_browser,
+            slice_time,
         )
 
     def set_good_video_options(self, cmd: list):
@@ -274,6 +271,89 @@ class SoundCloudDownloader(BaseDownloader):
 
     def set_best_video_options(self, cmd: list):
         self.set_audio_options(cmd)
+
+
+import urllib.request
+import urllib.error
+import json
+import re
+
+class TwitterDownloader(BaseDownloader):
+    def __init__(
+        self,
+        url: str,
+        option: str,
+        filename: str | None = None,
+        folder: str | None = None,
+        format_ext: str | None = None,
+        aria2_threads: int = 4,
+        slice_time: str | None = None,
+    ):
+        super().__init__(
+            "Twitter",
+            url,
+            option,
+            filename,
+            folder,
+            format_ext,
+            aria2_threads,
+            slice_time,
+        )
+
+    def build_command(self) -> list[str]:
+        cmd = super().build_command()
+        # Bỏ qua lỗi "Bad guest token" của yt-dlp cho các video/audio thông thường
+        cmd.extend(["--extractor-args", "twitter:api=syndication"])
+        return cmd
+
+    def download(self):
+        if self.option == "img":
+            print(f"[{self.platform_name}] Đang dùng vxtwitter API để tải ảnh (tránh lỗi yt-dlp)...")
+            self._download_images_via_vxtwitter()
+        else:
+            super().download()
+
+    def _download_images_via_vxtwitter(self):
+        # Trích xuất tweet ID từ URL
+        match = re.search(r"status/(\d+)", self.url)
+        if not match:
+            print(f">>> LỖI: Không tìm thấy ID bài viết trong URL '{self.url}'.")
+            sys.exit(1)
+        tweet_id = match.group(1)
+        
+        api_url = f"https://api.vxtwitter.com/i/status/{tweet_id}"
+        try:
+            req = urllib.request.Request(api_url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req) as response:
+                data = json.loads(response.read().decode('utf-8'))
+        except Exception as e:
+            print(f">>> LỖI: Không thể kết nối đến vxtwitter API: {e}")
+            sys.exit(1)
+
+        media_urls = data.get("mediaURLs", [])
+        if not media_urls:
+            print(f">>> Không tìm thấy ảnh nào trong bài đăng này.")
+            return
+
+        out_dir = Path(self.folder) if self.folder else Path(".")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        
+        for idx, m_url in enumerate(media_urls):
+            ext = m_url.split(".")[-1]
+            if len(ext) > 4: ext = "jpg" # Fallback
+            
+            base_name = self.filename if self.filename else tweet_id
+            suffix = f"_{idx}" if len(media_urls) > 1 else ""
+            out_file = out_dir / f"{base_name}{suffix}.{ext}"
+            
+            print(f"  Đang tải: {out_file}...")
+            try:
+                urllib.request.urlretrieve(m_url, str(out_file))
+            except Exception as e:
+                print(f"  -> Lỗi tải {m_url}: {e}")
+        
+        print("-" * 50)
+        print(">>> Hoàn tất tải ảnh từ Twitter!")
 
 
 class SpotifyDownloader:
@@ -287,8 +367,7 @@ class SpotifyDownloader:
         folder: str | None = None,
         format_ext: str | None = None,
         aria2_threads: int = 4,
-        cookies: str | None = None,
-        cookies_from_browser: str | None = None,
+        slice_time: str | None = None,
     ):
         self.platform_name = "Spotify"
         self.url = url
@@ -297,8 +376,6 @@ class SpotifyDownloader:
         self.folder = folder
         self.format_ext = (format_ext or "mp3").lower()
         self.threads = max(1, int(aria2_threads or 4))
-        self.cookies = cookies
-        self.cookies_from_browser = cookies_from_browser
 
     def download(self):
         ensure_utf8_stdout()
@@ -367,9 +444,6 @@ class SpotifyDownloader:
             print(
                 "  - SpotDL tải audio bằng nguồn khớp từ YouTube/YouTube Music, nên kết quả phụ thuộc khả năng tìm thấy bản tương ứng."
             )
-            print(
-                '  - Nếu cần cookie YouTube Music, dùng --cookies "D:\\path\\cookies.txt".'
-            )
             print("-" * 50)
             sys.exit(1)
 
@@ -392,13 +466,6 @@ class SpotifyDownloader:
         output_template = self._build_output_template()
         if output_template:
             cmd.extend(["--output", output_template])
-
-        if self.cookies:
-            cmd.extend(["--cookie-file", self.cookies])
-        if self.cookies_from_browser:
-            cmd.extend(
-                ["--yt-dlp-args", f"--cookies-from-browser {self.cookies_from_browser}"]
-            )
 
         return cmd
 

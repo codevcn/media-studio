@@ -33,6 +33,9 @@ dld               :Các tính năng tải xuống từ mạng xã hội (Downloa
    flip           :Lật hình ảnh theo chiều ngang hoặc dọc từ absolute path.
                   // Vd: mda image flip "D:\image.jpg" horizontal
                   // Vd: mda image flip "D:\image.jpg" vertical "D:\image_flipped.jpg"
+   rotate         :Xoay ảnh theo số độ (hỗ trợ số âm để xoay cùng chiều kim đồng hồ).
+                  // Vd: mda image rotate "D:\image.jpg" 90
+                  // Vd: mda image rotate "D:\image.jpg" -45 "D:\image_rotated.jpg"
 
 ## media:
    slice          :Cắt một đoạn từ media tại khoảng thời gian cho trước (vd: 00:10-01:22). Tùy chọn [output_filename] để chỉ định tên file xuất.
@@ -44,10 +47,11 @@ dld               :Các tính năng tải xuống từ mạng xã hội (Downloa
 
 ## dld:
    list           :Liệt kê danh sách các nền tảng đang được hỗ trợ cho lệnh dld.
-   ytb, ytb-music, fb, insta, tiktok, bilibili, scloud, spot   :Tải nội dung từ các nền tảng tương ứng. YouTube/Facebook/Instagram/TikTok/Bilibili/SoundCloud dùng yt-dlp + aria2; Spotify dùng spotDL. Hỗ trợ alias bili/bilili cho Bilibili. Hỗ trợ option: best-vid, good-vid, audio, sub, thumb. Riêng Spotify chỉ tải audio. Nếu bỏ qua option, mặc định dùng good-vid. Dùng --threads để chỉ định số luồng tải, mặc định 4. LƯU Ý: Spotify yêu cầu cấu hình SPOTIFY_CLIENT_ID và SPOTIFY_CLIENT_SECRET trong file .env.
+   ytb, ytb-music, fb, insta, tiktok, twitter, bilibili, scloud, spot   :Tải nội dung từ các nền tảng tương ứng. YouTube/Facebook/Instagram/TikTok/Twitter/Bilibili/SoundCloud dùng yt-dlp + aria2; Spotify dùng spotDL. Hỗ trợ alias bili/bilili cho Bilibili, x cho Twitter. Hỗ trợ option: best-vid, good-vid, audio, sub, thumb. Riêng Spotify chỉ tải audio. Nếu bỏ qua option, mặc định dùng good-vid. Dùng --threads để chỉ định số luồng tải, mặc định 4. Hỗ trợ --slice để cắt video theo khoảng thời gian (chỉ cho YouTube). LƯU Ý: Spotify yêu cầu cấu hình SPOTIFY_CLIENT_ID và SPOTIFY_CLIENT_SECRET trong file .env.
                   // Vd: mda dld ytb "https://youtube.com/..." best-vid --threads 6
+                  // Vd: mda dld ytb "https://youtube.com/..." --slice "00:10-01:22"
                   // Vd: mda dld bili "https://bilibili.com/..." audio --filename "my_audio" --folder "C:\Downloads" --format "mp3" --threads 8
-   douyin         :Tải Douyin bằng công cụ chuyên dụng (jiji262/douyin-downloader) hỗ trợ no-watermark, deduplication. Nhận --mode [post|like|mix|music|favorites] cho tải hàng loạt. LƯU Ý: Yêu cầu bắt buộc cấu hình 5 giá trị cookie Douyin trong file .env để không bị chặn.
+   douyin         :Tải Douyin bằng công cụ chuyên dụng (jiji262/douyin-downloader) hỗ trợ no-watermark, deduplication. Nhận --mode [post|like|mix|music|favorites] cho tải hàng loạt.
                   // Vd: mda dld douyin "https://v.douyin.com/..."
                   // Vd: mda dld douyin "https://www.douyin.com/user/..." --mode post --folder "data/video/output"
                   // Vd: mda dld bili "https://bilibili.com/..." audio --filename "my_audio" --folder "C:\Downloads" --format "mp3" --threads 8

@@ -25,6 +25,7 @@ MDIA_MEDIA_ACTION_PART_BY_SIZE = "part-size"
 MDIA_MEDIA_ACTION_PART_BY_TIME = "part-time"
 MDIA_MEDIA_ACTION_SLICE = "slice"
 MDIA_IMAGE_ACTION_FLIP = "flip"
+MDIA_IMAGE_ACTION_ROTATE = "rotate"
 MDIA_IMAGE_FLIP_HORIZONTAL = "horizontal"
 MDIA_IMAGE_FLIP_VERTICAL = "vertical"
 MDIA_GIT_ACTION_COMMIT = "commit"
@@ -41,6 +42,8 @@ MDIA_DLD_ACTION_BILI = "bili"
 MDIA_DLD_ACTION_BILILI = "bilili"
 MDIA_DLD_ACTION_SOUNDCLOUD = "scloud"
 MDIA_DLD_ACTION_SPOTIFY = "spot"
+MDIA_DLD_ACTION_TWITTER = "twitter"
+MDIA_DLD_ACTION_X = "x"
 MDIA_DLD_ACTION_LIST = "list"
 MDIA_DLD_DEFAULT_OPTION = "good-vid"
 MDIA_DLD_DEFAULT_THREADS = 4
@@ -177,6 +180,20 @@ def run_image_flip(input_path: str, direction: str, output_path=None):
     sys.exit(0)
 
 
+def run_image_rotate(input_path: str, degrees: str, output_path=None):
+    if not input_path or not degrees:
+        raise Exception(
+            f"{MDIA_WARNING_ACTION_MISSING} - Cần truyền input_path absolute và số độ xoay (vd: 90, -45)"
+        )
+
+    script_path = get_script_path("features/image/rotate_image.py")
+    cmd = [sys.executable, script_path, input_path, degrees]
+    if output_path:
+        cmd.append(output_path)
+    subprocess.run(cmd)
+    sys.exit(0)
+
+
 def run_downloader(
     platform: str,
     url: str,
@@ -185,8 +202,7 @@ def run_downloader(
     folder: str,
     format_ext: str,
     threads: int,
-    cookies: str,
-    cookies_from_browser: str,
+    slice_time: str,
 ):
     if not url:
         raise Exception(
@@ -196,10 +212,6 @@ def run_downloader(
     option = option or MDIA_DLD_DEFAULT_OPTION
     if threads < 1:
         raise Exception("--threads phải là số nguyên >= 1")
-    if cookies and cookies_from_browser:
-        raise Exception(
-            "Chỉ dùng một trong hai flag: --cookies hoặc --cookies-from-browser"
-        )
 
     script_path = get_script_path("features/downloader/run_downloader.py")
     cmd = [sys.executable, script_path, platform, url, "--option", option]
@@ -209,11 +221,9 @@ def run_downloader(
         cmd.extend(["--folder", folder])
     if format_ext:
         cmd.extend(["--format", format_ext])
+    if slice_time:
+        cmd.extend(["--slice", slice_time])
     cmd.extend(["--threads", str(threads)])
-    if cookies:
-        cmd.extend(["--cookies", cookies])
-    if cookies_from_browser:
-        cmd.extend(["--cookies-from-browser", cookies_from_browser])
 
     subprocess.run(cmd)
     sys.exit(0)
@@ -335,6 +345,9 @@ def main():
         "--format", type=str, help="Chỉ định định dạng đầu ra (dùng cho module dld)"
     )
     parser.add_argument(
+        "--slice", type=str, help="Cắt khoảng thời gian khi tải (chỉ Youtube). Vd: 00:10-01:22"
+    )
+    parser.add_argument(
         "--option",
         type=str,
         default=MDIA_DLD_DEFAULT_OPTION,
@@ -355,16 +368,7 @@ def main():
         default=MDIA_DLD_DEFAULT_THREADS,
         help=f"Số luồng tải song song cho aria2 (dùng cho module dld, mặc định {MDIA_DLD_DEFAULT_THREADS})",
     )
-    parser.add_argument(
-        "--cookies",
-        type=str,
-        help="Đường dẫn file cookies Netscape dùng cho module dld",
-    )
-    parser.add_argument(
-        "--cookies-from-browser",
-        type=str,
-        help="Lấy cookies từ browser cho module dld (vd: chrome, edge, firefox)",
-    )
+
 
     args = parser.parse_args()
 
@@ -470,6 +474,8 @@ def main():
         elif cmd_type == MDIA_TYPE_IMAGE:
             if cmd_action == MDIA_IMAGE_ACTION_FLIP:
                 run_image_flip(cmd_value, cmd_extra, cmd_limit)
+            elif cmd_action == MDIA_IMAGE_ACTION_ROTATE:
+                run_image_rotate(cmd_value, cmd_extra, cmd_limit)
             elif cmd_action is None:
                 raise Exception(MDIA_WARNING_ACTION_MISSING)
             else:
@@ -490,6 +496,8 @@ def main():
                 MDIA_DLD_ACTION_BILILI,
                 MDIA_DLD_ACTION_SOUNDCLOUD,
                 MDIA_DLD_ACTION_SPOTIFY,
+                MDIA_DLD_ACTION_TWITTER,
+                MDIA_DLD_ACTION_X,
             ]
             if cmd_action == MDIA_DLD_ACTION_LIST:
                 print("Các nền tảng được hỗ trợ cho lệnh 'dld':")
@@ -502,6 +510,7 @@ def main():
                 print("  - bilibili  : Bilibili (alias: bili, bilili)")
                 print("  - soundcloud: SoundCloud (alias: scloud)")
                 print("  - spotify   : Spotify (alias: spot)")
+                print("  - twitter   : Twitter (alias: x)")
                 sys.exit(0)
             elif cmd_action == MDIA_DLD_ACTION_DOUYIN:
                 run_douyin_advanced(cmd_value, args.folder, args.mode, args.threads)
@@ -514,8 +523,7 @@ def main():
                     args.folder,
                     args.format,
                     args.threads,
-                    args.cookies,
-                    args.cookies_from_browser,
+                    args.slice,
                 )
             elif cmd_action is None:
                 raise Exception(MDIA_WARNING_ACTION_MISSING)

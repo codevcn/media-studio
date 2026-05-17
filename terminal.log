@@ -1,0 +1,18 @@
+PS D:\D-Downloads\tiktok-beta-japan> mda dld x "https://x.com/ditesuna/status/2047692157755297833" --option img
+[Twitter] Đang bắt đầu tải (img)...
+URL: https://x.com/ditesuna/status/2047692157755297833
+aria2 threads: 4
+[twitter] Extracting URL: https://x.com/ditesuna/status/2047692157755297833
+[twitter] 2047692157755297833: Downloading guest token
+[twitter] 2047692157755297833: Downloading GraphQL JSON
+ERROR: [twitter] 2047692157755297833: Error(s) while querying API: Bad guest token; please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U
+--------------------------------------------------
+>>> LỖI: Quá trình tải bằng yt-dlp thất bại (Mã lỗi 1).
+Gợi ý khắc phục:
+  - Xác minh xem URL có trỏ đến nội dung hợp lệ không.
+  - Video có thể bị giới hạn độ tuổi, riêng tư (private) hoặc yêu cầu đăng nhập.
+  - Có thể URL không chứa phụ đề nếu bạn chọn option 'sub'.
+  - Nếu lỗi liên quan aria2, hãy kiểm tra lệnh aria2c đã có trong PATH.
+  - Cấu trúc trang web đã thay đổi, hãy thử cập nhật yt-dlp: pip install -U yt-dlp
+--------------------------------------------------
+PS D:\D-Downloads\tiktok-beta-japan>

@@ -55,43 +55,7 @@ def main():
     if args.mode:
         cmd.extend(["--mode", args.mode])
 
-    msToken = os.getenv("DOUYIN_MS_TOKEN", "")
-    ttwid = os.getenv("DOUYIN_TTWID", "")
-    odin_tt = os.getenv("DOUYIN_ODIN_TT", "")
-    csrf_token = os.getenv("DOUYIN_PASSPORT_CSRF_TOKEN", "")
-    sid_guard = os.getenv("DOUYIN_SID_GUARD", "")
 
-    if not msToken or not ttwid or not odin_tt or not csrf_token or not sid_guard:
-        print(">>> LỖI: Chưa cấu hình đủ 5 biến Cookie Douyin trong file .env!")
-        print("Douyin hiện tại chặn các yêu cầu tải ẩn danh (không có cookie hợp lệ).")
-        print("Vui lòng mở trình duyệt (đã đăng nhập Douyin), nhấn F12 -> Application -> Storage -> Cookies.")
-        print("Tìm và copy các giá trị tương ứng vào file .env:")
-        print("- DOUYIN_MS_TOKEN")
-        print("- DOUYIN_TTWID")
-        print("- DOUYIN_ODIN_TT")
-        print("- DOUYIN_PASSPORT_CSRF_TOKEN")
-        print("- DOUYIN_SID_GUARD")
-        sys.exit(1)
-
-    config_path = DOUYIN_DOWNLOADER_DIR / args.config
-    try:
-        with open(config_path, "r", encoding="utf-8") as f:
-            config_data = yaml.safe_load(f)
-        
-        if "cookies" not in config_data or not isinstance(config_data["cookies"], dict):
-            config_data["cookies"] = {}
-            
-        config_data["cookies"]["msToken"] = msToken
-        config_data["cookies"]["ttwid"] = ttwid
-        config_data["cookies"]["odin_tt"] = odin_tt
-        config_data["cookies"]["passport_csrf_token"] = csrf_token
-        config_data["cookies"]["sid_guard"] = sid_guard
-
-        with open(config_path, "w", encoding="utf-8") as f:
-            yaml.dump(config_data, f, allow_unicode=True, default_flow_style=False)
-    except Exception as e:
-        print(f">>> Lỗi cập nhật cookie vào config.yml: {e}")
-        sys.exit(1)
 
     result = subprocess.run(cmd, cwd=DOUYIN_DOWNLOADER_DIR, check=False)
     sys.exit(result.returncode)

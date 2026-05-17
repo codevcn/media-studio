@@ -11,6 +11,7 @@ from platform_downloaders import (
     BilibiliDownloader,
     SoundCloudDownloader,
     SpotifyDownloader,
+    TwitterDownloader,
 )
 
 DEFAULT_DOWNLOAD_OPTION = "good-vid"
@@ -27,7 +28,7 @@ def main():
     parser.add_argument(
         "platform",
         type=str,
-        help="Nền tảng (ytb, ytb-music, fb, insta, tiktok, douyin, bilibili, bili, bilili, soundcloud, spotify)",
+        help="Nền tảng (ytb, ytb-music, fb, insta, tiktok, douyin, bilibili, bili, bilili, soundcloud, spotify, twitter, x)",
     )
     parser.add_argument("url", type=str, help="URL video cần tải")
     parser.add_argument(
@@ -39,13 +40,8 @@ def main():
     parser.add_argument("--filename", type=str, default=None, help="Tên file đầu ra")
     parser.add_argument("--folder", type=str, default=None, help="Thư mục lưu trữ")
     parser.add_argument("--format", type=str, default=None, help="Định dạng file tải xuống (mp4, mp3, wav...)")
-    parser.add_argument("--cookies", type=str, default=None, help="Đường dẫn file cookies Netscape")
-    parser.add_argument(
-        "--cookies-from-browser",
-        type=str,
-        default=None,
-        help="Lấy cookies từ browser (vd: chrome, edge, firefox)",
-    )
+    parser.add_argument("--slice", type=str, default=None, help="Cắt khoảng thời gian khi tải (chỉ Youtube). Vd: 00:10-01:22")
+
     parser.add_argument(
         "--threads",
         "--aria2-threads",
@@ -64,14 +60,11 @@ def main():
     folder = args.folder
     format_ext = args.format
     threads = args.threads
-    cookies = args.cookies
-    cookies_from_browser = args.cookies_from_browser
+    slice_time = args.slice
+
 
     if threads < 1:
         print(">>> Lỗi: --threads phải là số nguyên >= 1.")
-        sys.exit(1)
-    if cookies and cookies_from_browser:
-        print(">>> Lỗi: Chỉ dùng một trong hai flag: --cookies hoặc --cookies-from-browser.")
         sys.exit(1)
 
     # Map platform code tới các Class tương ứng
@@ -87,6 +80,8 @@ def main():
         "soundcloud": SoundCloudDownloader,
         "scloud": SoundCloudDownloader,
         "spot": SpotifyDownloader,
+        "twitter": TwitterDownloader,
+        "x": TwitterDownloader,
     }
 
     if platform not in downloaders_map:
@@ -103,8 +98,7 @@ def main():
         folder,
         format_ext,
         threads,
-        cookies,
-        cookies_from_browser,
+        slice_time,
     )
 
     # Thực thi tải
