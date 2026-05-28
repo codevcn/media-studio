@@ -203,6 +203,7 @@ def run_downloader(
     format_ext: str,
     threads: int,
     slice_time: str,
+    noti: str = None,
 ):
     if not url:
         raise Exception(
@@ -223,14 +224,19 @@ def run_downloader(
         cmd.extend(["--format", format_ext])
     if slice_time:
         cmd.extend(["--slice", slice_time])
-    cmd.extend(["--threads", str(threads)])
+    if noti:
+        cmd.extend(["--noti", noti])
 
     subprocess.run(cmd)
     sys.exit(0)
 
 
 def run_douyin_advanced(
-    url: str, folder: str | None = None, mode: str | None = None, threads: int = 5
+    url: str,
+    folder: str | None = None,
+    mode: str | None = None,
+    threads: int = 5,
+    noti: str | None = None,
 ):
     if not url:
         raise Exception(f"{MDIA_WARNING_ACTION_MISSING} - Cần truyền URL Douyin.")
@@ -243,6 +249,8 @@ def run_douyin_advanced(
         cmd.extend(["--mode", mode])
     if threads:
         cmd.extend(["--threads", str(threads)])
+    if noti:
+        cmd.extend(["--noti", noti])
 
     subprocess.run(cmd)
     sys.exit(0)
@@ -345,7 +353,9 @@ def main():
         "--format", type=str, help="Chỉ định định dạng đầu ra (dùng cho module dld)"
     )
     parser.add_argument(
-        "--slice", type=str, help="Cắt khoảng thời gian khi tải (chỉ Youtube). Vd: 00:10-01:22"
+        "--slice",
+        type=str,
+        help="Cắt khoảng thời gian khi tải (chỉ Youtube). Vd: 00:10-01:22",
     )
     parser.add_argument(
         "--option",
@@ -368,7 +378,14 @@ def main():
         default=MDIA_DLD_DEFAULT_THREADS,
         help=f"Số luồng tải song song cho aria2 (dùng cho module dld, mặc định {MDIA_DLD_DEFAULT_THREADS})",
     )
-
+    parser.add_argument(
+        "--noti",
+        type=str,
+        nargs="?",
+        const="telegram",
+        default=None,
+        help="Gửi thông báo sau khi tải xong (mặc định: telegram)",
+    )
 
     args = parser.parse_args()
 
@@ -513,7 +530,9 @@ def main():
                 print("  - twitter   : Twitter (alias: x)")
                 sys.exit(0)
             elif cmd_action == MDIA_DLD_ACTION_DOUYIN:
-                run_douyin_advanced(cmd_value, args.folder, args.mode, args.threads)
+                run_douyin_advanced(
+                    cmd_value, args.folder, args.mode, args.threads, args.noti
+                )
             elif cmd_action in valid_actions:
                 run_downloader(
                     cmd_action,
@@ -524,6 +543,7 @@ def main():
                     args.format,
                     args.threads,
                     args.slice,
+                    args.noti,
                 )
             elif cmd_action is None:
                 raise Exception(MDIA_WARNING_ACTION_MISSING)

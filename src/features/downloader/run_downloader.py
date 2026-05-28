@@ -1,5 +1,11 @@
 import sys
 import argparse
+import os
+
+# Ensure src directory is in sys.path
+src_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
 
 # Cho phép import các file cùng cấp
 from platform_downloaders import (
@@ -39,8 +45,19 @@ def main():
     )
     parser.add_argument("--filename", type=str, default=None, help="Tên file đầu ra")
     parser.add_argument("--folder", type=str, default=None, help="Thư mục lưu trữ")
-    parser.add_argument("--format", type=str, default=None, help="Định dạng file tải xuống (mp4, mp3, wav...)")
-    parser.add_argument("--slice", type=str, default=None, help="Cắt khoảng thời gian khi tải (chỉ Youtube). Vd: 00:10-01:22")
+    parser.add_argument(
+        "--format",
+        type=str,
+        default=None,
+        help="Định dạng file tải xuống (mp4, mp3, wav...)",
+    )
+    parser.add_argument(
+        "--slice",
+        type=str,
+        default=None,
+        help="Cắt khoảng thời gian khi tải (chỉ Youtube). Vd: 00:10-01:22",
+    )
+    parser.add_argument("--noti", type=str, default=None, help="Gửi thông báo")
 
     parser.add_argument(
         "--threads",
@@ -61,7 +78,7 @@ def main():
     format_ext = args.format
     threads = args.threads
     slice_time = args.slice
-
+    noti = args.noti
 
     if threads < 1:
         print(">>> Lỗi: --threads phải là số nguyên >= 1.")
@@ -102,7 +119,24 @@ def main():
     )
 
     # Thực thi tải
-    downloader.download()
+    try:
+        downloader.download()
+        if noti:
+            from utils.notifiers import NotifierFactory
+
+            notifier = NotifierFactory.get_notifier(noti)
+            if notifier:
+                notifier.notify(f'✅ "mda dld" đã tải xong từ nền tảng {platform}:\n{url}')
+    except Exception as e:
+        if noti:
+            from utils.notifiers import NotifierFactory
+
+            notifier = NotifierFactory.get_notifier(noti)
+            if notifier:
+                notifier.notify(
+                    f"❌ Lỗi tải nền tảng {platform}:\n{url}\n\nChi tiết: {str(e)}"
+                )
+        raise e
 
 
 if __name__ == "__main__":
