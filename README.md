@@ -4,6 +4,12 @@ Media Studio là bộ công cụ CLI và GUI cá nhân để xử lý video, âm
 
 ## Tính Năng
 
+### Chế Độ Tương Tác & Auto-Complete (Interactive REPL)
+
+- `mda` (không kèm tham số): Khởi động chế độ tương tác `mda > `.
+- Nhấn **`[Tab]`** để tự động hoàn thành / xoay vòng danh sách `Type` (A-Z) và `Action`.
+- Hỗ trợ lọc theo tiền tố, bảo toàn tham số phụ khi đổi action, và các lệnh nội bộ: `help`, `types`, `clear`, `exit`.
+
 ### App
 
 - `mda app player`: mở trình phát video kép bằng PySide6 để so sánh hai video song song.

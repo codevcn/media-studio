@@ -1,0 +1,12 @@
+# Template khai báo cho src/contents/app_features.yml trong Media Studio CLI
+- name: "<type_name>"
+  description: "<Mô tả ngắn gọn về nhóm lệnh>"
+  actions:
+    - id: "ACTION <số_thứ_tự>"
+      title: "<Tiêu đề tính năng>"
+      command: "mda <type> <action> [value] [extra] [limit] [flags]"
+      summary: "<Tóm tắt chức năng trong 1 câu>"
+      details: "<Giải thích chi tiết cách thức hoạt động, luồng xử lý FFmpeg/yt-dlp và các cờ>"
+      parameters: "<Mô tả các tham số bắt buộc và tùy chọn>"
+      flags: "<Mô tả chi tiết các cờ như --option, --format, --threads, --mode, --slice, --noti...>"
+      conditions: "<Điều kiện tiên quyết: ví dụ FFmpeg trong PATH, yt-dlp, cấu hình .env hoặc submodule>"

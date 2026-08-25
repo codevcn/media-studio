@@ -105,7 +105,8 @@ media-studio/
     │       └── video_watermark_remover.py # Xóa watermark/logo theo tọa độ x,y,w,h bằng FFmpeg delogo
     │
     └── utils/
-        ├── helpers.py                  # Helper đọc config và resolve path từ project root
+        ├── helpers.py                  # Helper đọc config, làm sạch URL và resolve path
+        ├── interactive_cli.py          # Chế độ tương tác REPL và Tab Auto-complete mức thấp qua msvcrt
         └── notifiers/                  # Hệ thống thông báo (Factory pattern)
             ├── __init__.py
             ├── base_notifier.py        # Abstract Base Class cho Notifiers
@@ -229,6 +230,16 @@ flowchart LR
 ### 4.6. Notifier & Utils (`src/utils/`)
 - Áp dụng mô hình **Factory Pattern** (`NotifierFactory.get_notifier(type)`).
 - Hiện tại đã hoàn thiện `TelegramNotifier` gửi payload JSON tới endpoint `https://api.telegram.org/bot<TOKEN>/sendMessage` (đọc token và chat ID từ `.env`).
+
+### 4.7. Chế Độ Tương Tác & Auto-Complete (`src/utils/interactive_cli.py`)
+- Kích hoạt khi chạy `mda` không kèm tham số.
+- Bảng tổng quan hiển thị toàn bộ 9 nhóm `Type` và danh sách `Action` tương ứng.
+- **Tab Auto-Complete & Cycle:**
+  - Tự động điền và xoay vòng Type theo thứ tự A-Z khi nhấn `[Tab]`.
+  - Tự động điền và xoay vòng Action theo Type đã chọn khi nhấn `[Tab]`.
+  - Hỗ trợ lọc theo tiền tố (prefix filtering) và bảo toàn các tham số phụ phía sau khi thay đổi action.
+- **Bắt phím mức thấp (`msvcrt`):** Đọc phím tức thời trên Windows, xử lý Backspace, Esc, Ctrl+C và tô màu ANSI trực tiếp trên console (`mda > ` prompt). Fallback an toàn khi chạy non-TTY hoặc môi trường khác.
+- **Lệnh tiện ích nội bộ session:** `h`/`help`, `types`/`list`, `cls`/`clear`, `q`/`exit`.
 
 ---
 

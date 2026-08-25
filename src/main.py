@@ -337,7 +337,12 @@ def run_git_commit_and_push(message: str):
 def main():
     ensure_utf8_stdout()
 
-    if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
+    if len(sys.argv) == 1:
+        from utils.interactive_cli import run_interactive_session
+        run_interactive_session()
+        sys.exit(0)
+
+    if "-h" in sys.argv or "--help" in sys.argv:
         print_help()
         sys.exit(0)
 
