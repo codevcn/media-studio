@@ -34,11 +34,13 @@ Media Studio là bộ công cụ CLI và GUI cá nhân để xử lý video, âm
 - Các platform dùng `yt-dlp` + `aria2c`: `ytb`, `ytb-music`, `fb`, `insta`, `tiktok`, `bilibili`, `bili`, `bilili`, `soundcloud`.
 - `spotify` dùng `spotDL` và chỉ hỗ trợ tải audio từ link track/album/playlist/artist. (Yêu cầu cấu hình credentials trong `.env`).
 - `douyin` dùng module chuyên dụng `jiji262/douyin-downloader`, hỗ trợ tải no-watermark và batch profile. Truyền thêm mode thay vì option thông thường (`post`, `like`, `mix`, `music`, `favorites`). (Yêu cầu cấu hình 5 giá trị cookie trong `.env`).
-- Option yt-dlp: `best-vid`, `good-vid`, `audio`, `sub`; mặc định là `good-vid`.
+- `mda dld update`: tự động kiểm tra và nâng cấp `yt-dlp` lên phiên bản mới nhất từ PyPI.
+- Option yt-dlp: `best-vid`, `good-vid`, `audio`, `sub`, `thumb`, `img`; mặc định là `good-vid`.
 
 Ví dụ:
 
 ```bash
+mda dld update
 mda dld ytb "https://youtube.com/watch?v=..." good-vid --threads 8
 mda dld soundcloud "https://soundcloud.com/artist/track" audio --format mp3
 mda dld spotify "https://open.spotify.com/playlist/..." audio --folder "D:\Music" --format mp3

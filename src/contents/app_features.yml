@@ -117,6 +117,14 @@ mdia_tool:
           conditions: "Không có"
           parameters: "Không có tham số."
 
+        - id: "ACTION 11"
+          title: "Cập nhật yt-dlp lên bản mới nhất"
+          command: "mda dld update"
+          summary: "Tự động tải và cài đặt phiên bản yt-dlp mới nhất từ PyPI."
+          details: "Thực thi nâng cấp gói yt-dlp thông qua pip để khắc phục các lỗi stream 403 Forbidden do YouTube cập nhật thuật toán bot detection/cipher."
+          conditions: "Yêu cầu kết nối Internet."
+          parameters: "Không có tham số."
+
 config:
   ROOT_FOLDER_PATH: "Đường dẫn gốc của dự án mdia-studio."
 

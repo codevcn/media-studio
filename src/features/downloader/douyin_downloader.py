@@ -13,6 +13,7 @@ if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
 from configs.paths import ROOT_FOLDER_PATH
+from utils.helpers import clean_url
 
 env_path = os.path.join(ROOT_FOLDER_PATH, ".env")
 load_dotenv(dotenv_path=env_path)
@@ -67,13 +68,15 @@ def main():
         print("Lỗi: Vui lòng cung cấp URL Douyin.")
         sys.exit(1)
 
+    url = clean_url(args.url, "douyin")
+
     cmd = [
         sys.executable,
         str(DOUYIN_DOWNLOADER_DIR / "run.py"),
         "-c",
         str(DOUYIN_DOWNLOADER_DIR / args.config),
         "-u",
-        args.url,
+        url,
         "-p",
         args.folder,
         "-t",

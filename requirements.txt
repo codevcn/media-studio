@@ -6,3 +6,5 @@ PySide6
 PyYAML
 yt-dlp
 requests
+paddlepaddle==2.6.2
+paddleocr==2.8.1

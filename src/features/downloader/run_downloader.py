@@ -19,6 +19,7 @@ from platform_downloaders import (
     SpotifyDownloader,
     TwitterDownloader,
 )
+from utils.helpers import clean_url
 
 DEFAULT_DOWNLOAD_OPTION = "good-vid"
 DEFAULT_ARIA2_THREADS = 4
@@ -71,7 +72,7 @@ def main():
     args = parser.parse_args()
 
     platform = args.platform.lower()
-    url = args.url
+    url = clean_url(args.url, platform)
     option = args.option
     filename = args.filename
     folder = args.folder

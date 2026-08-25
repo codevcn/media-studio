@@ -47,6 +47,8 @@ dld               :Các tính năng tải xuống từ mạng xã hội (Downloa
 
 ## dld:
    list           :Liệt kê danh sách các nền tảng đang được hỗ trợ cho lệnh dld.
+   update         :Tự động kiểm tra và nâng cấp yt-dlp lên phiên bản mới nhất từ PyPI.
+                  // Vd: mda dld update
    ytb, ytb-music, fb, insta, tiktok, twitter, bilibili, scloud, spot   :Tải nội dung từ các nền tảng tương ứng. YouTube/Facebook/Instagram/TikTok/Twitter/Bilibili/SoundCloud dùng yt-dlp + aria2; Spotify dùng spotDL. Hỗ trợ alias bili/bilili cho Bilibili, x cho Twitter. Hỗ trợ option: best-vid, good-vid, audio, sub, thumb. Riêng Spotify chỉ tải audio. Nếu bỏ qua option, mặc định dùng good-vid. Dùng --threads để chỉ định số luồng tải, mặc định 4. Hỗ trợ --slice để cắt video theo khoảng thời gian (chỉ cho YouTube). LƯU Ý: Spotify yêu cầu cấu hình SPOTIFY_CLIENT_ID và SPOTIFY_CLIENT_SECRET trong file .env.
                   // Vd: mda dld ytb "https://youtube.com/..." best-vid --threads 6
                   // Vd: mda dld ytb "https://youtube.com/..." --slice "00:10-01:22"

@@ -1,5 +1,13 @@
+import os
 import subprocess
 import sys
+
+# Ensure src directory is in sys.path
+src_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+
+from utils.helpers import clean_url
 
 DEFAULT_DOWNLOAD_OPTION = "good-vid"
 DEFAULT_ARIA2_THREADS = 4
@@ -29,7 +37,7 @@ class BaseDownloader:
         slice_time: str | None = None,
     ):
         self.platform_name = platform_name
-        self.url = url
+        self.url = clean_url(url, platform_name)
         self.option = option or DEFAULT_DOWNLOAD_OPTION
         self.filename = filename
         self.folder = folder

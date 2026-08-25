@@ -10,6 +10,7 @@ if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
 from configs.paths import ROOT_FOLDER_PATH
+from utils.helpers import clean_url
 
 env_path = os.path.join(ROOT_FOLDER_PATH, ".env")
 load_dotenv(dotenv_path=env_path)
@@ -370,7 +371,7 @@ class SpotifyDownloader:
         slice_time: str | None = None,
     ):
         self.platform_name = "Spotify"
-        self.url = url
+        self.url = clean_url(url, "spotify")
         self.option = option or DEFAULT_DOWNLOAD_OPTION
         self.filename = filename
         self.folder = folder

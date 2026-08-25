@@ -31,10 +31,11 @@ mda dld <platform> <url> [--option <opt>] [--filename <name>] [--folder <path>] 
 | `spot` | Spotify | spotDL CLI |
 | `douyin` | Douyin | jiji262/douyin-downloader (submodule) |
 
-Xem nhanh danh sách:
+Xem nhanh danh sách hoặc cập nhật:
 
 ```bash
 mda dld list
+mda dld update
 ```
 
 ---

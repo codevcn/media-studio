@@ -4,6 +4,7 @@ import subprocess
 import argparse
 
 from configs.paths import ROOT_FOLDER_PATH, CONTENTS_FOLDER_PATH
+from utils.helpers import clean_url
 
 # --- Constants ---
 # Types
@@ -15,10 +16,12 @@ MDIA_TYPE_APP = "app"
 MDIA_TYPE_OPEN = "open"
 MDIA_TYPE_GIT = "git"
 MDIA_TYPE_DLD = "dld"
+MDIA_TYPE_OCR = "ocr"
 
 # Actions
 MDIA_APP_ACTION_VIDEO_PLAYER = "player"
 MDIA_VIDEO_ACTION_RM_LOGO = "rm-logo"
+MDIA_OCR_ACTION_SCAN = "scan"
 MDIA_VIDEO_ACTION_FRAMES = "frames"
 MDIA_AUDIO_ACTION_EXTRACT = "extract"
 MDIA_MEDIA_ACTION_PART_BY_SIZE = "part-size"
@@ -45,6 +48,7 @@ MDIA_DLD_ACTION_SPOTIFY = "spot"
 MDIA_DLD_ACTION_TWITTER = "twitter"
 MDIA_DLD_ACTION_X = "x"
 MDIA_DLD_ACTION_LIST = "list"
+MDIA_DLD_ACTION_UPDATE = "update"
 MDIA_DLD_DEFAULT_OPTION = "good-vid"
 MDIA_DLD_DEFAULT_THREADS = 4
 
@@ -210,6 +214,9 @@ def run_downloader(
             f"{MDIA_WARNING_ACTION_MISSING} - Cần truyền URL. Option mặc định là {MDIA_DLD_DEFAULT_OPTION}."
         )
 
+    # Chuẩn hóa và làm sạch URL trước khi tải
+    url = clean_url(url, platform)
+
     option = option or MDIA_DLD_DEFAULT_OPTION
     if threads < 1:
         raise Exception("--threads phải là số nguyên >= 1")
@@ -241,6 +248,9 @@ def run_douyin_advanced(
     if not url:
         raise Exception(f"{MDIA_WARNING_ACTION_MISSING} - Cần truyền URL Douyin.")
 
+    # Chuẩn hóa và làm sạch URL trước khi tải
+    url = clean_url(url, "douyin")
+
     script_path = get_script_path("features/downloader/douyin_downloader.py")
     cmd = [sys.executable, script_path, url]
     if folder:
@@ -252,6 +262,29 @@ def run_douyin_advanced(
     if noti:
         cmd.extend(["--noti", noti])
 
+    subprocess.run(cmd)
+    sys.exit(0)
+
+
+def run_dld_update():
+    script_path = get_script_path("features/downloader/update_ytdlp.py")
+    subprocess.run([sys.executable, script_path])
+    sys.exit(0)
+
+
+def run_ocr_scan(input_path: str, output: str, dest: str = None):
+    if not input_path:
+        raise Exception(
+            f"{MDIA_WARNING_ACTION_MISSING} - Cần truyền ít nhất 1 tham số: input_path (đường dẫn tới file ảnh)"
+        )
+
+    script_path = get_script_path("features/ocr/scan_ocr.py")
+    cmd = [sys.executable, script_path, input_path]
+    if output:
+        cmd.extend(["--output", output])
+    if dest:
+        cmd.extend(["--dest", dest])
+        
     subprocess.run(cmd)
     sys.exit(0)
 
@@ -315,7 +348,7 @@ def main():
     parser.add_argument(
         "type",
         nargs="?",
-        help="Loại lệnh: app | audio | video | image | media | open | git | dld",
+        help="Loại lệnh: app | audio | video | image | media | open | git | dld | ocr",
     )
     parser.add_argument(
         "action",
@@ -385,6 +418,18 @@ def main():
         const="telegram",
         default=None,
         help="Gửi thông báo sau khi tải xong (mặc định: telegram)",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        choices=["log", "file"],
+        default="log",
+        help="Nơi chứa text đầu ra khi chạy OCR (mặc định: log)",
+    )
+    parser.add_argument(
+        "--dest",
+        type=str,
+        help="Đường dẫn file đích nếu chọn --output=file",
     )
 
     args = parser.parse_args()
@@ -486,6 +531,17 @@ def main():
                 raise Exception(MDIA_WARNING_ACTION_WRONG)
 
         # -------------------------------------------------------------
+        # Dispatcher cho nhóm OCR
+        # -------------------------------------------------------------
+        elif cmd_type == MDIA_TYPE_OCR:
+            if cmd_action == MDIA_OCR_ACTION_SCAN:
+                run_ocr_scan(cmd_value, args.output, args.dest)
+            elif cmd_action is None:
+                raise Exception(MDIA_WARNING_ACTION_MISSING)
+            else:
+                raise Exception(MDIA_WARNING_ACTION_WRONG)
+
+        # -------------------------------------------------------------
         # Dispatcher cho nhóm IMAGE
         # -------------------------------------------------------------
         elif cmd_type == MDIA_TYPE_IMAGE:
@@ -528,7 +584,10 @@ def main():
                 print("  - soundcloud: SoundCloud (alias: scloud)")
                 print("  - spotify   : Spotify (alias: spot)")
                 print("  - twitter   : Twitter (alias: x)")
+                print("  - update    : Tự động cập nhật yt-dlp lên bản mới nhất")
                 sys.exit(0)
+            elif cmd_action == MDIA_DLD_ACTION_UPDATE:
+                run_dld_update()
             elif cmd_action == MDIA_DLD_ACTION_DOUYIN:
                 run_douyin_advanced(
                     cmd_value, args.folder, args.mode, args.threads, args.noti
