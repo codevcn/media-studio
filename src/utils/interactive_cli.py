@@ -3,14 +3,17 @@ import sys
 import shlex
 import subprocess
 
+
 def ensure_utf8_stdout():
     if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
         if hasattr(sys.stdout, "reconfigure"):
             sys.stdout.reconfigure(encoding="utf-8")
 
+
 ensure_utf8_stdout()
 
 from colorama import init
+
 init(autoreset=True)
 
 # ---------------------------------------------------------------------------
@@ -43,7 +46,7 @@ TYPE_ACTION_MAP = {
     "media": ["part-size", "part-time", "slice"],
     "ocr": ["scan"],
     "open": [],
-    "video": ["frames", "rm-logo"],
+    "video": ["frames", "locate-logo", "rm-logo"],
 }
 
 TYPE_DESCRIPTIONS = {
@@ -193,6 +196,7 @@ def format_buffer_colored(buffer: str) -> str:
 def autocomplete_input(prompt: str = PROMPT_COLORED) -> str | None:
     try:
         import msvcrt
+
         if not sys.stdin.isatty():
             try:
                 line = sys.stdin.readline()
@@ -300,8 +304,12 @@ def print_types_overview():
         print(f"  \033[32;1m{cmd_type:<8}\033[0m │ \033[37m{desc}\033[0m")
         print(f"           └── \033[90mactions:\033[0m \033[36m{actions_str}\033[0m")
     print("\033[90m" + "─" * 70 + "\033[0m")
-    print("💡 \033[33mGợi ý:\033[0m Nhập '\033[36mhelp\033[0m' hoặc '\033[36mh\033[0m' để xem toàn bộ tài liệu chi tiết.")
-    print("          Nhấn \033[35;1m[Tab]\033[0m để tự động điền / xoay vòng Type & Action, nhập '\033[31mq\033[0m' hoặc '\033[31mexit\033[0m' để thoát.")
+    print(
+        "💡 \033[33mGợi ý:\033[0m Nhập '\033[36mhelp\033[0m' hoặc '\033[36mh\033[0m' để xem toàn bộ tài liệu chi tiết."
+    )
+    print(
+        "          Nhấn \033[35;1m[Tab]\033[0m để tự động điền / xoay vòng Type & Action, nhập '\033[31mq\033[0m' hoặc '\033[31mexit\033[0m' để thoát."
+    )
     print()
 
 

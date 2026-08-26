@@ -21,6 +21,7 @@ MDIA_TYPE_OCR = "ocr"
 # Actions
 MDIA_APP_ACTION_VIDEO_PLAYER = "player"
 MDIA_VIDEO_ACTION_RM_LOGO = "rm-logo"
+MDIA_VIDEO_ACTION_LOCATE_LOGO = "locate-logo"
 MDIA_OCR_ACTION_SCAN = "scan"
 MDIA_VIDEO_ACTION_FRAMES = "frames"
 MDIA_AUDIO_ACTION_EXTRACT = "extract"
@@ -92,7 +93,7 @@ def run_app_video_player():
 def run_video_rm_logo(input_path: str, coords: str, output_path=None):
     if not input_path or not coords:
         raise Exception(
-            f"{MDIA_WARNING_ACTION_MISSING} - Cần truyền ít nhất 2 tham số: input_path và tọa độ x,y,w,h"
+            f"{MDIA_WARNING_ACTION_MISSING} - Cần truyền ít nhất 2 tham số: input_path và tọa độ x1,y1,x2,y2"
         )
 
     script_path = get_script_path("features/video/video_watermark_remover.py")
@@ -100,6 +101,17 @@ def run_video_rm_logo(input_path: str, coords: str, output_path=None):
     if output_path:
         cmd.append(output_path)
     subprocess.run(cmd)
+    sys.exit(0)
+
+
+def run_video_locate_logo(input_path: str, timestamp: str):
+    if not input_path or not timestamp:
+        raise Exception(
+            f"{MDIA_WARNING_ACTION_MISSING} - Cần truyền 2 tham số: input_path và timestamp"
+        )
+
+    script_path = get_script_path("features/video/video_logo_locator.py")
+    subprocess.run([sys.executable, script_path, input_path, timestamp])
     sys.exit(0)
 
 
@@ -284,7 +296,7 @@ def run_ocr_scan(input_path: str, output: str, dest: str = None):
         cmd.extend(["--output", output])
     if dest:
         cmd.extend(["--dest", dest])
-        
+
     subprocess.run(cmd)
     sys.exit(0)
 
@@ -339,6 +351,7 @@ def main():
 
     if len(sys.argv) == 1:
         from utils.interactive_cli import run_interactive_session
+
         run_interactive_session()
         sys.exit(0)
 
@@ -482,6 +495,8 @@ def main():
         elif cmd_type == MDIA_TYPE_VIDEO:
             if cmd_action == MDIA_VIDEO_ACTION_RM_LOGO:
                 run_video_rm_logo(cmd_value, cmd_extra, cmd_limit)
+            elif cmd_action == MDIA_VIDEO_ACTION_LOCATE_LOGO:
+                run_video_locate_logo(cmd_value, cmd_extra)
             elif cmd_action == MDIA_VIDEO_ACTION_FRAMES:
                 run_video_frames(cmd_value, cmd_extra, cmd_limit)
             elif cmd_action is None:

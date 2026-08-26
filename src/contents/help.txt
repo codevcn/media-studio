@@ -20,8 +20,10 @@ dld               :Các tính năng tải xuống từ mạng xã hội (Downloa
    player     :Mở ứng dụng Video Player.
 
 ## video:
-   rm-logo        :Xóa watermark/logo khỏi video tại vùng tọa độ x,y,w,h chỉ định.
-                  // Vd: mda video rm-logo "D:\video.mp4" "24,21,135,44"
+   locate-logo    :Mở UI chọn vùng logo trên 1 frame tại timestamp chỉ định; trả về tọa độ x1,y1,x2,y2 theo pixel gốc.
+                  // Vd: mda video locate-logo "D:\video.mp4" 00:00:15.500
+   rm-logo        :Xóa watermark/logo khỏi video tại vùng tọa độ x1,y1,x2,y2 chỉ định.
+                  // Vd: mda video rm-logo "D:\video.mp4" "24,21,159,65"
    frames         :Trích xuất khung hình video ra ảnh PNG với khoảng thời gian giãn cách (vd: 5s, 200ms, 2m). (Lưu vào thư mục riêng kèm timestamp)
                   // Vd: mda video frames "D:\video.mp4" 5s 50
 

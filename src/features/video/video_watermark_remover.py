@@ -83,7 +83,7 @@ class FFmpegLogoRemover:
 def main():
     if len(sys.argv) < 3:
         print(
-            "Sử dụng: python video_watermark_remover.py <input_path> <x,y,w,h> [output_path]"
+            "Sử dụng: python video_watermark_remover.py <input_path> <x1,y1,x2,y2> [output_path]"
         )
         sys.exit(1)
 
@@ -91,17 +91,24 @@ def main():
     box_coords = sys.argv[2].split(",")
 
     if len(box_coords) != 4:
-        print("Lỗi: Tọa độ phải có định dạng x,y,w,h (ví dụ: 24,21,135,44)")
+        print("Lỗi: Tọa độ phải có định dạng x1,y1,x2,y2 " "(ví dụ: 24,21,159,65)")
         sys.exit(1)
 
     try:
-        x_coord = int(box_coords[0].strip())
-        y_coord = int(box_coords[1].strip())
-        width = int(box_coords[2].strip())
-        height = int(box_coords[3].strip())
+        x1 = int(box_coords[0].strip())
+        y1 = int(box_coords[1].strip())
+        x2 = int(box_coords[2].strip())
+        y2 = int(box_coords[3].strip())
     except ValueError:
-        print("Lỗi: Tọa độ phải là các số nguyên âm.")
+        print("Lỗi: Tọa độ phải là các số nguyên.")
         sys.exit(1)
+
+    if x2 <= x1 or y2 <= y1:
+        print("Lỗi: x2 phải lớn hơn x1 và y2 phải lớn hơn y1.")
+        sys.exit(1)
+
+    width = x2 - x1
+    height = y2 - y1
 
     if len(sys.argv) >= 4 and sys.argv[3].strip():
         output_video = sys.argv[3].strip()
@@ -115,12 +122,17 @@ def main():
         remover = FFmpegLogoRemover(input_path=input_video, output_path=output_video)
 
         print(
-            f"Bắt đầu tiến trình xóa watermark tại ({x_coord},{y_coord}) kích thước {width}x{height}..."
+            f"Bắt đầu tiến trình xóa watermark tại vùng "
+            f"({x1},{y1}) -> ({x2},{y2}), kích thước {width}x{height}..."
         )
 
-        # Gọi hàm xóa logo
         remover.remove_logo(
-            x=x_coord, y=y_coord, w=width, h=height, preset="faster", crf=23
+            x=x1,
+            y=y1,
+            w=width,
+            h=height,
+            preset="faster",
+            crf=23,
         )
 
     except Exception as e:

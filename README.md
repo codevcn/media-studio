@@ -17,7 +17,8 @@ Media Studio là bộ công cụ CLI và GUI cá nhân để xử lý video, âm
 
 ### Video
 
-- `mda video rm-logo <input_path> <x,y,w,h> [output_path]`: xóa watermark/logo bằng FFmpeg `delogo`.
+- `mda video locate-logo <input_path> <timestamp>`: trích một frame và mở UI chọn vùng logo, trả về `x1,y1,x2,y2` theo pixel gốc.
+- `mda video rm-logo <input_path> <x1,y1,x2,y2> [output_path]`: xóa watermark/logo bằng FFmpeg `delogo`; tự tính `w=x2-x1`, `h=y2-y1`.
 - `mda video frames <input_path> <gap_time> [limit]`: trích xuất frame PNG theo khoảng thời gian, ví dụ `5s`, `200ms`, `2m`.
 
 ### Audio

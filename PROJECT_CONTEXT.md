@@ -102,7 +102,8 @@ media-studio/
     │   │   └── _print_feature_description.py # In mô tả định dạng màu từ file app_features.yml
     │   └── video/
     │       ├── extract_frames.py       # Trích xuất frames video ra PNG lossless theo chu kỳ thời gian
-    │       └── video_watermark_remover.py # Xóa watermark/logo theo tọa độ x,y,w,h bằng FFmpeg delogo
+    │       ├── video_logo_locator.py       # UI chọn vùng logo x1,y1,x2,y2 trên frame tại timestamp
+    │       └── video_watermark_remover.py # Xóa watermark/logo theo vùng x1,y1,x2,y2 bằng FFmpeg delogo
     │
     └── utils/
         ├── helpers.py                  # Helper đọc config, làm sạch URL và resolve path
@@ -128,7 +129,8 @@ mda <type> <action> [value] [extra] [limit] [flags]
 | `<type>` | `<action>` | Tham số / Value | Ý nghĩa & Script thực thi |
 | :--- | :--- | :--- | :--- |
 | `app` | `player` | Không có | Mở GUI Dual Video Player (`src/apps/video_player/video_player.py`). |
-| `video` | `rm-logo` | `<input_path> <x,y,w,h> [output_path]` | Xóa logo watermark bằng FFmpeg `delogo` (`src/features/video/video_watermark_remover.py`). |
+| `video` | `locate-logo` | `<input_path> <timestamp>` | Trích 1 frame, mở PySide6 UI để chọn vùng logo và xuất `x1,y1,x2,y2` theo pixel gốc (`src/features/video/video_logo_locator.py`). |
+| `video` | `rm-logo` | `<input_path> <x1,y1,x2,y2> [output_path]` | Tự tính `w=x2-x1`, `h=y2-y1`, sau đó xóa logo bằng FFmpeg `delogo` (`src/features/video/video_watermark_remover.py`). |
 | `video` | `frames` | `<input_path> <gap_time> [limit]` | Trích xuất frames PNG lossless (vd: `gap_time` = `5s`, `200ms`, `2m`) (`src/features/video/extract_frames.py`). |
 | `audio` | `extract` | `<input_path> <output_path>` | Tách audio sang `.wav` hoặc `.mp3` (`src/features/audio/extract_audio.py`). |
 | `image` | `flip` | `<input_path> <horizontal\|vertical> [out]` | Lật ảnh bằng Pillow (`src/features/image/flip_image.py`). |
@@ -224,7 +226,8 @@ flowchart LR
 - **`extract_audio.py`:** Tách âm thanh sang file WAV PCM (`pcm_s16le`) hoặc MP3 chất lượng cao (`libmp3lame -q:a 2`).
 
 ### 4.5. Module Video Processing (`src/features/video/`)
-- **`video_watermark_remover.py`:** Dùng filter `delogo=x={x}:y={y}:w={w}:h={h}` của FFmpeg, áp dụng encoding `libx264 -preset faster -crf 23` và giữ nguyên audio (`-c:a copy`).
+- **`video_logo_locator.py`:** Trích đúng 1 frame tại timestamp qua FFmpeg memory pipe, hiển thị bằng PySide6 và map vùng kéo chuột về native pixel coordinates `x1,y1,x2,y2`.
+- **`video_watermark_remover.py`:** CLI nhận `x1,y1,x2,y2`, tự tính `w=x2-x1`, `h=y2-y1`, rồi dùng filter `delogo=x={x}:y={y}:w={w}:h={h}`; encode `libx264 -preset faster -crf 23` và giữ nguyên audio (`-c:a copy`).
 - **`extract_frames.py`:** Nhận tham số giãn cách (vd: `5s`, `200ms`, `2m`), tính ra `fps = 1000.0 / gap_ms` và trích xuất ảnh định dạng **PNG lossless** vào thư mục gắn timestamp `{video_stem}--frames--{timestamp}`.
 
 ### 4.6. Notifier & Utils (`src/utils/`)
