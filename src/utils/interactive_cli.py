@@ -246,8 +246,22 @@ def append_history(history: list[str], line: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Bắt phím mức thấp trên Windows (msvcrt)
+# Bắt phím mức thấp trên Windows (msvcrt) & Điều khiển con trỏ
 # ---------------------------------------------------------------------------
+def render_input_line(prompt: str, buffer: str, cursor_pos: int) -> None:
+    """
+    Xóa dòng hiện tại, in lại prompt + colored buffer, và đặt con trỏ đúng vị trí cursor_pos.
+    """
+    colored_text = format_buffer_colored(buffer)
+    sys.stdout.write(f"\r\033[K{prompt}{colored_text}")
+    # Sau khi in colored_text, con trỏ đang ở cuối dòng (vị trí len(buffer)).
+    # Nếu cursor_pos < len(buffer), di chuyển con trỏ lùi về bên trái.
+    chars_to_left = len(buffer) - cursor_pos
+    if chars_to_left > 0:
+        sys.stdout.write(f"\033[{chars_to_left}D")
+    sys.stdout.flush()
+
+
 def autocomplete_input(
     prompt: str = PROMPT_COLORED, history: list[str] | None = None
 ) -> str | None:
@@ -273,6 +287,7 @@ def autocomplete_input(
             return None
 
     buffer = ""
+    cursor_pos = 0
     last_was_tab = False
     original_prefix = ""
     cycle_idx = 0
@@ -305,18 +320,18 @@ def autocomplete_input(
             last_was_tab = True
             if ok:
                 buffer = new_buf
-                sys.stdout.write(f"\r\033[K{prompt}{format_buffer_colored(buffer)}")
-                sys.stdout.flush()
+                cursor_pos = len(buffer)
+                render_input_line(prompt, buffer, cursor_pos)
 
         # Backspace
         elif ch in ("\x08", "\x7f"):
             last_was_tab = False
             original_prefix = ""
             cycle_idx = 0
-            if len(buffer) > 0:
-                buffer = buffer[:-1]
-                sys.stdout.write(f"\r\033[K{prompt}{format_buffer_colored(buffer)}")
-                sys.stdout.flush()
+            if cursor_pos > 0:
+                buffer = buffer[: cursor_pos - 1] + buffer[cursor_pos:]
+                cursor_pos -= 1
+                render_input_line(prompt, buffer, cursor_pos)
 
         # Ctrl+C, Ctrl+D
         elif ch in ("\x03", "\x04"):
@@ -328,6 +343,7 @@ def autocomplete_input(
         elif ch == "\x1b":
             if buffer:
                 buffer = ""
+                cursor_pos = 0
                 last_was_tab = False
                 original_prefix = ""
                 cycle_idx = 0
@@ -339,15 +355,60 @@ def autocomplete_input(
                 sys.stdout.write("\n")
                 return None
 
-        # Special prefix (Arrow keys, F-keys, etc.)
+        # Special prefix (Arrow keys, F-keys, Delete, Home, End, etc.)
         elif ch in ("\x00", "\xe0"):
             try:
                 scan_code = msvcrt.getwch()
             except Exception:
                 scan_code = None
 
+            # Phím Mũi tên Trái (Left Arrow - 'K' / 0x4B) -> Di chuyển con trỏ sang trái
+            if scan_code in ("K", "\x4b"):
+                if cursor_pos > 0:
+                    cursor_pos -= 1
+                    last_was_tab = False
+                    original_prefix = ""
+                    cycle_idx = 0
+                    render_input_line(prompt, buffer, cursor_pos)
+
+            # Phím Mũi tên Phải (Right Arrow - 'M' / 0x4D) -> Di chuyển con trỏ sang phải
+            elif scan_code in ("M", "\x4d"):
+                if cursor_pos < len(buffer):
+                    cursor_pos += 1
+                    last_was_tab = False
+                    original_prefix = ""
+                    cycle_idx = 0
+                    render_input_line(prompt, buffer, cursor_pos)
+
+            # Phím Home (0x47 / 'G') -> Về đầu dòng
+            elif scan_code in ("G", "\x47"):
+                if cursor_pos > 0:
+                    cursor_pos = 0
+                    last_was_tab = False
+                    original_prefix = ""
+                    cycle_idx = 0
+                    render_input_line(prompt, buffer, cursor_pos)
+
+            # Phím End (0x4F / 'O') -> Về cuối dòng
+            elif scan_code in ("O", "\x4f"):
+                if cursor_pos < len(buffer):
+                    cursor_pos = len(buffer)
+                    last_was_tab = False
+                    original_prefix = ""
+                    cycle_idx = 0
+                    render_input_line(prompt, buffer, cursor_pos)
+
+            # Phím Delete (0x53 / 'S') -> Xóa ký tự tại vị trí con trỏ
+            elif scan_code in ("S", "\x53"):
+                if cursor_pos < len(buffer):
+                    buffer = buffer[:cursor_pos] + buffer[cursor_pos + 1 :]
+                    last_was_tab = False
+                    original_prefix = ""
+                    cycle_idx = 0
+                    render_input_line(prompt, buffer, cursor_pos)
+
             # Phím Mũi tên Lên (Up Arrow - 'H' / 0x48) -> Duyệt lùi về lệnh cũ hơn
-            if scan_code in ("H", "\x48"):
+            elif scan_code in ("H", "\x48"):
                 if history:
                     # Nếu đang ở vị trí cuối cùng (buffer nháp), lưu nháp trước khi duyệt lên
                     if history_index == len(history):
@@ -356,13 +417,11 @@ def autocomplete_input(
                     if history_index > 0:
                         history_index -= 1
                         buffer = history[history_index]
+                        cursor_pos = len(buffer)
                         last_was_tab = False
                         original_prefix = ""
                         cycle_idx = 0
-                        sys.stdout.write(
-                            f"\r\033[K{prompt}{format_buffer_colored(buffer)}"
-                        )
-                        sys.stdout.flush()
+                        render_input_line(prompt, buffer, cursor_pos)
 
             # Phím Mũi tên Xuống (Down Arrow - 'P' / 0x50) -> Duyệt tiến về lệnh mới hơn
             elif scan_code in ("P", "\x50"):
@@ -373,22 +432,20 @@ def autocomplete_input(
                             buffer = saved_draft
                         else:
                             buffer = history[history_index]
+                        cursor_pos = len(buffer)
                         last_was_tab = False
                         original_prefix = ""
                         cycle_idx = 0
-                        sys.stdout.write(
-                            f"\r\033[K{prompt}{format_buffer_colored(buffer)}"
-                        )
-                        sys.stdout.flush()
+                        render_input_line(prompt, buffer, cursor_pos)
 
         # Printable character
         elif ch.isprintable():
             last_was_tab = False
             original_prefix = ""
             cycle_idx = 0
-            buffer += ch
-            sys.stdout.write(f"\r\033[K{prompt}{format_buffer_colored(buffer)}")
-            sys.stdout.flush()
+            buffer = buffer[:cursor_pos] + ch + buffer[cursor_pos:]
+            cursor_pos += 1
+            render_input_line(prompt, buffer, cursor_pos)
 
 
 # ---------------------------------------------------------------------------
