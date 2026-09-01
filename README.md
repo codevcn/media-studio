@@ -59,7 +59,7 @@ mda dld spotify "https://open.spotify.com/playlist/..." audio --folder "D:\Music
 - `mda open -a`: mở project trong Antigravity IDE.
 - `mda open -f`: mở thư mục project trong File Explorer.
 - `mda git commit -m "<message>"`: chạy helper commit/push.
-- `mda <type> <action> --des`: in mô tả chi tiết từ catalog `src/contents/app_features.yml`.
+- `mda --info` / `mda <type> --info` / `mda <type> <action> --info`: in mô tả chi tiết từ catalog `src/contents/app_features.yml` (vẫn hỗ trợ alias `--des`).
 
 ## Yêu Cầu
 
@@ -171,6 +171,7 @@ mda dld douyin "https://v.douyin.com/..." --cookies "data\credentials\cookies.tx
 
 ```bash
 mda --help
-mda dld --des
-mda video frames --des
+mda --info
+mda dld --info
+mda video frames --info
 ```

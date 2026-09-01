@@ -46,7 +46,8 @@ def parse_args():
         help="Chế độ batch",
     )
     parser.add_argument("--threads", "-t", type=int, default=5, help="Số luồng tải")
-    parser.add_argument("--des", action="store_true", help="Hiển thị mô tả chi tiết")
+    parser.add_argument("--info", action="store_true", help="Hiển thị mô tả chi tiết")
+    parser.add_argument("--des", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--noti", type=str, default=None, help="Gửi thông báo")
     return parser.parse_args()
 
@@ -58,7 +59,7 @@ def main():
             sys.stdout.reconfigure(encoding="utf-8")
 
     args = parse_args()
-    if args.des:
+    if args.info or args.des:
         print(
             "Tích hợp douyin-downloader: hỗ trợ single/batch download Douyin chuyên sâu (no-watermark, deduplication, browser fallback)."
         )

@@ -191,9 +191,69 @@ def format_buffer_colored(buffer: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Quản lý Lịch sử Lệnh (Command History)
+# ---------------------------------------------------------------------------
+MAX_HISTORY_ITEMS = 200
+
+
+def get_history_file_path() -> str:
+    src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        from configs.paths import ROOT_FOLDER_PATH
+
+        root_dir = ROOT_FOLDER_PATH or os.path.dirname(src_dir)
+    except Exception:
+        root_dir = os.path.dirname(src_dir)
+
+    cred_dir = os.path.join(root_dir, "data", "credentials")
+    os.makedirs(cred_dir, exist_ok=True)
+    return os.path.join(cred_dir, ".mda_history")
+
+
+def load_history() -> list[str]:
+    history_file = get_history_file_path()
+    if not os.path.isfile(history_file):
+        return []
+    try:
+        with open(history_file, "r", encoding="utf-8", errors="replace") as f:
+            lines = [line.strip() for line in f if line.strip()]
+            return lines[-MAX_HISTORY_ITEMS:]
+    except Exception:
+        return []
+
+
+def save_history(history: list[str]) -> None:
+    history_file = get_history_file_path()
+    try:
+        with open(history_file, "w", encoding="utf-8") as f:
+            for item in history[-MAX_HISTORY_ITEMS:]:
+                f.write(f"{item}\n")
+    except Exception:
+        pass
+
+
+def append_history(history: list[str], line: str) -> None:
+    cleaned = line.strip()
+    if not cleaned:
+        return
+    # Không lưu các lệnh nội bộ thoát hoặc xóa màn hình
+    if cleaned.lower() in ("q", "quit", "exit", "cls", "clear"):
+        return
+    # Tránh trùng lặp liên tiếp
+    if history and history[-1] == cleaned:
+        return
+    history.append(cleaned)
+
+
+# ---------------------------------------------------------------------------
 # Bắt phím mức thấp trên Windows (msvcrt)
 # ---------------------------------------------------------------------------
-def autocomplete_input(prompt: str = PROMPT_COLORED) -> str | None:
+def autocomplete_input(
+    prompt: str = PROMPT_COLORED, history: list[str] | None = None
+) -> str | None:
+    if history is None:
+        history = []
+
     try:
         import msvcrt
 
@@ -216,6 +276,10 @@ def autocomplete_input(prompt: str = PROMPT_COLORED) -> str | None:
     last_was_tab = False
     original_prefix = ""
     cycle_idx = 0
+
+    # Quản lý con trỏ lịch sử lệnh
+    history_index = len(history)
+    saved_draft = ""
 
     sys.stdout.write(prompt)
     sys.stdout.flush()
@@ -267,6 +331,8 @@ def autocomplete_input(prompt: str = PROMPT_COLORED) -> str | None:
                 last_was_tab = False
                 original_prefix = ""
                 cycle_idx = 0
+                history_index = len(history)
+                saved_draft = ""
                 sys.stdout.write(f"\r\033[K{prompt}")
                 sys.stdout.flush()
             else:
@@ -276,9 +342,44 @@ def autocomplete_input(prompt: str = PROMPT_COLORED) -> str | None:
         # Special prefix (Arrow keys, F-keys, etc.)
         elif ch in ("\x00", "\xe0"):
             try:
-                msvcrt.getwch()  # Nuốt scan code phụ
+                scan_code = msvcrt.getwch()
             except Exception:
-                pass
+                scan_code = None
+
+            # Phím Mũi tên Lên (Up Arrow - 'H' / 0x48) -> Duyệt lùi về lệnh cũ hơn
+            if scan_code in ("H", "\x48"):
+                if history:
+                    # Nếu đang ở vị trí cuối cùng (buffer nháp), lưu nháp trước khi duyệt lên
+                    if history_index == len(history):
+                        saved_draft = buffer
+
+                    if history_index > 0:
+                        history_index -= 1
+                        buffer = history[history_index]
+                        last_was_tab = False
+                        original_prefix = ""
+                        cycle_idx = 0
+                        sys.stdout.write(
+                            f"\r\033[K{prompt}{format_buffer_colored(buffer)}"
+                        )
+                        sys.stdout.flush()
+
+            # Phím Mũi tên Xuống (Down Arrow - 'P' / 0x50) -> Duyệt tiến về lệnh mới hơn
+            elif scan_code in ("P", "\x50"):
+                if history:
+                    if history_index < len(history):
+                        history_index += 1
+                        if history_index == len(history):
+                            buffer = saved_draft
+                        else:
+                            buffer = history[history_index]
+                        last_was_tab = False
+                        original_prefix = ""
+                        cycle_idx = 0
+                        sys.stdout.write(
+                            f"\r\033[K{prompt}{format_buffer_colored(buffer)}"
+                        )
+                        sys.stdout.flush()
 
         # Printable character
         elif ch.isprintable():
@@ -308,7 +409,10 @@ def print_types_overview():
         "💡 \033[33mGợi ý:\033[0m Nhập '\033[36mhelp\033[0m' hoặc '\033[36mh\033[0m' để xem toàn bộ tài liệu chi tiết."
     )
     print(
-        "          Nhấn \033[35;1m[Tab]\033[0m để tự động điền / xoay vòng Type & Action, nhập '\033[31mq\033[0m' hoặc '\033[31mexit\033[0m' để thoát."
+        "          Thêm '\033[33m--info\033[0m' vào sau bất kỳ lệnh nào (vd: \033[36mvideo rm-logo --info\033[0m) để tra cứu cú pháp & điều kiện."
+    )
+    print(
+        "          Nhấn \033[35;1m[↑]/[↓]\033[0m để duyệt lịch sử lệnh, nhấn \033[35;1m[Tab]\033[0m để tự động điền / xoay vòng Type & Action, nhập '\033[31mq\033[0m' để thoát."
     )
     print()
 
@@ -323,9 +427,11 @@ def run_interactive_session():
     src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     main_py_path = os.path.join(src_dir, "main.py")
 
+    history = load_history()
+
     while True:
         try:
-            line = autocomplete_input()
+            line = autocomplete_input(history=history)
             if line is None:
                 print(">>> Tạm biệt!")
                 break
@@ -356,6 +462,10 @@ def run_interactive_session():
                 os.system("cls" if os.name == "nt" else "clear")
                 print_types_overview()
                 continue
+
+            # Ghi nhận lệnh vào lịch sử (trước khi loại bỏ mda prefix)
+            append_history(history, line)
+            save_history(history)
 
             # Tự động loại bỏ từ khóa 'mda' nếu người dùng lỡ gõ
             if line.startswith("mda "):

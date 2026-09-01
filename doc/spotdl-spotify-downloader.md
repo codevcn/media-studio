@@ -63,7 +63,7 @@ Các thay đổi chính đã thực hiện:
     - Nếu thiếu `spotdl`, chương trình in hướng dẫn cài bằng `pipx`.
 
 - `src/features/system/_print_feature_description.py`
-  - Thêm `spotify` và `soundcloud` vào alias để `mda dld spotify --des` vẫn in đúng mô tả.
+  - Thêm `spotify` và `soundcloud` vào alias để `mda dld spotify --info` vẫn in đúng mô tả.
 
 - `src/contents/help.txt`
   - Cập nhật danh sách platform downloader.

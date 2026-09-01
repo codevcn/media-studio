@@ -349,13 +349,43 @@ def run_git_commit_and_push(message: str):
 def main():
     ensure_utf8_stdout()
 
-    if len(sys.argv) == 1:
+    raw_args = sys.argv[1:]
+
+    # 1. Bóc tách Dispatcher Flags toàn cục trước
+    info_flag = False
+    feature_args = []
+
+    for arg in raw_args:
+        if arg in ("--info", "--des"):
+            info_flag = True
+        else:
+            feature_args.append(arg)
+
+    # 2. Xử lý tra cứu mô tả qua --info / --des (vị trí tự do)
+    if info_flag:
+        pos_args = [a for a in feature_args if not a.startswith("-")]
+        cmd_type = pos_args[0] if len(pos_args) > 0 else None
+        cmd_action = pos_args[1] if len(pos_args) > 1 else None
+
+        script_path = get_script_path("features/system/_print_feature_description.py")
+        run_cmd = [sys.executable, script_path]
+        if cmd_type:
+            run_cmd.extend(["--type", cmd_type])
+        if cmd_action:
+            run_cmd.extend(["--action", cmd_action])
+
+        subprocess.run(run_cmd)
+        sys.exit(0)
+
+    # 3. Không có tham số nào: Khởi động chế độ tương tác (REPL)
+    if len(raw_args) == 0:
         from utils.interactive_cli import run_interactive_session
 
         run_interactive_session()
         sys.exit(0)
 
-    if "-h" in sys.argv or "--help" in sys.argv:
+    # 4. Trợ giúp: -h hoặc --help
+    if "-h" in raw_args or "--help" in raw_args:
         print_help()
         sys.exit(0)
 
@@ -386,7 +416,10 @@ def main():
         help="Mở thư mục dự án trong File Explorer",
     )
     parser.add_argument(
-        "--des", action="store_true", help="Hiện mô tả chi tiết của lệnh"
+        "--info", action="store_true", help="Hiện mô tả chi tiết của lệnh"
+    )
+    parser.add_argument(
+        "--des", action="store_true", help=argparse.SUPPRESS
     )
     parser.add_argument(
         "-m",
@@ -457,21 +490,6 @@ def main():
     cmd_value = args.value
     cmd_extra = args.extra
     cmd_limit = args.limit
-
-    if args.des:
-        if not cmd_type:
-            print(
-                ">>> Warn: Vui lòng nhập <type> (vd: app, video...) cùng với `--des` để đọc mô tả lệnh."
-            )
-            sys.exit(1)
-
-        script_path = get_script_path("features/system/_print_feature_description.py")
-        run_cmd = [sys.executable, script_path, "--type", cmd_type]
-        if cmd_action:
-            run_cmd.extend(["--action", cmd_action])
-
-        subprocess.run(run_cmd)
-        sys.exit(0)
 
     try:
         # Bước kiểm tra type

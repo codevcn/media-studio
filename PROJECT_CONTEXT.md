@@ -25,7 +25,7 @@
    - **Pillow & OpenCV:** Xử lý hình ảnh và frame video.
 3. **Hiệu năng cao với Stream Copy:** Các tác vụ cắt/chia media ưu tiên dùng kỹ thuật Stream Copy (`-c copy` trong FFmpeg) để hoàn thành trong vài giây mà không cần encode lại làm suy giảm chất lượng.
 4. **Tách biệt dữ liệu và mã nguồn:** Toàn bộ dữ liệu runtime (video, audio, image, cookies, database SQLite) được đặt tại thư mục gốc `data/`, không nằm lẫn trong mã nguồn `src/`.
-5. **Self-Documenting CLI:** Dự án có catalog mô tả chi tiết bằng YAML (`src/contents/app_features.yml`) cho phép tra cứu ngay qua cờ `--des`.
+5. **Self-Documenting CLI:** Dự án có catalog mô tả chi tiết bằng YAML (`src/contents/app_features.yml`) cho phép tra cứu ngay qua cờ `--info` (hỗ trợ alias `--des`).
 
 ---
 
@@ -147,7 +147,7 @@ mda <type> <action> [value] [extra] [limit] [flags]
 | `dld` | `ytb`, `fb`, `insta`, `tiktok`, `spot`, `bili`, `scloud`, `twitter`... | `<url> [option] [flags]` | Tải media đa nền tảng qua `yt-dlp` + `aria2c` hoặc `spotDL` (`src/features/downloader/run_downloader.py`). |
 
 ### 3.3. Các cờ (Flags) đáng chú ý
-- `--des`: In mô tả chi tiết, cú pháp, tham số và điều kiện của lệnh từ `src/contents/app_features.yml` ra terminal kèm màu sắc.
+- `--info`: In mô tả chi tiết, cú pháp, tham số và điều kiện của lệnh từ `src/contents/app_features.yml` ra terminal kèm màu sắc (hỗ trợ tra cứu 3 cấp độ: `mda --info`, `mda <type> --info`, `mda <type> <action> --info`). Vẫn hỗ trợ alias `--des`.
 - `--option <opt>`: Chọn loại/chất lượng tải cho downloader: `good-vid` (mặc định 720p), `best-vid` (gốc cao nhất), `audio`, `sub` (phụ đề SRT/VTT), `thumb` (ảnh bìa), `img` (toàn bộ ảnh trong bài viết).
 - `--threads <n>`: Số kết nối song song cho `aria2c` khi tải (mặc định: 4).
 - `--format <ext>`: Chỉ định định dạng đầu ra (vd: `mp4`, `mkv`, `mp3`, `wav`, `flac`...). *Có cơ chế auto-detect:* nếu `--format` là audio format nhưng `--option` là video, hệ thống tự động đổi `--option` sang `audio`.
@@ -302,7 +302,7 @@ Khi cần thêm một action hoặc module mới vào Media Studio, hãy tuân t
 
 6. Cập nhật `src/contents/app_features.yml`:
    -> Thêm khối metadata đầy đủ (id, title, command, summary, details, conditions, parameters, flags)
-   để lệnh `mda <type> <action> --des` hoạt động chính xác.
+   để lệnh `mda <type> <action> --info` hoạt động chính xác.
 
 7. Cập nhật tài liệu:
    -> Bổ sung vào README.md và ARCHITECTURE.md nếu có thay đổi về cách dùng.

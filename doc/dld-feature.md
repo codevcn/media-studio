@@ -315,7 +315,7 @@ mda dld douyin "https://www.douyin.com/user/..." --mode post --folder "D:\Douyin
 mda dld twitter "https://twitter.com/user/status/..." --option img --folder "D:\Twitter"
 
 # Xem mô tả chi tiết tính năng dld
-mda dld --des
+mda dld --info
 ```
 
 ---
@@ -385,7 +385,7 @@ DOUYIN_SID_GUARD=""
 
 ```bash
 # Xem mô tả tính năng dld ngay trong terminal
-mda dld --des
+mda dld --info
 
 # Hoặc xem toàn bộ tính năng
 mda --help

@@ -19,11 +19,11 @@
   - [ ] Cập nhật `TYPE_DESCRIPTIONS`: Thêm hoặc cập nhật dòng mô tả tiếng Việt.
 - [ ] **Đồng bộ tài liệu 4 lớp**:
   - [ ] `src/contents/help.txt` (thêm cú pháp và ví dụ `// Vd: mda ...`).
-  - [ ] `src/contents/app_features.yml` (chuẩn bị block YAML cho cờ `--des`).
+  - [ ] `src/contents/app_features.yml` (chuẩn bị block YAML cho cờ `--info`).
   - [ ] `PROJECT_CONTEXT.md` (cây thư mục & bảng tra cứu Type / Action tại mục 3.2).
   - [ ] `README.md` (hướng dẫn cho người dùng cuối).
 - [ ] **Kiểm thử nghiệm thu**:
-  - [ ] `python src/main.py <type> <action> --des` $\rightarrow$ In đúng format YAML.
+  - [ ] `python src/main.py <type> <action> --info` $\rightarrow$ In đúng format YAML.
   - [ ] Kiểm tra Tab Autocomplete trong Chế độ Tương tác (`python src/main.py`).
   - [ ] `python -m compileall -q src` $\rightarrow$ Đạt mã thoát 0.
   - [ ] Chạy lệnh trực tiếp với dữ liệu mẫu trong `data/`.
@@ -36,7 +36,7 @@
 - [ ] Cập nhật mô tả & ví dụ trong `src/contents/help.txt`.
 - [ ] Cập nhật trường `command`, `summary`, `details`, `flags` trong `src/contents/app_features.yml`.
 - [ ] Cập nhật bảng tra cứu lệnh trong `PROJECT_CONTEXT.md` và `README.md`.
-- [ ] Chạy lệnh kiểm thử `--des`, biên dịch `compileall` và chạy lệnh thực thi.
+- [ ] Chạy lệnh kiểm thử `--info`, biên dịch `compileall` và chạy lệnh thực thi.
 
 ---
 

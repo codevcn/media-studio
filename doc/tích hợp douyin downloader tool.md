@@ -96,12 +96,12 @@ def parse_args():
     parser.add_argument("--mode", choices=["post", "like", "mix", "music", "favorites"], help="Chế độ batch")
     parser.add_argument("--threads", "-t", type=int, default=5, help="Số luồng tải")
     parser.add_argument("--cookies", help="Đường dẫn cookies.txt (tự động dùng data/credentials/)")
-    parser.add_argument("--des", action="store_true", help="Hiển thị mô tả chi tiết")
+    parser.add_argument("--info", action="store_true", help="Hiển thị mô tả chi tiết")
     return parser.parse_args()
 
 def main():
     args = parse_args()
-    if args.des:
+    if args.info:
         print("Tích hợp douyin-downloader: hỗ trợ single/batch download Douyin chuyên sâu (no-watermark, deduplication, browser fallback).")
         sys.exit(0)
 
@@ -170,7 +170,7 @@ if __name__ == "__main__":
 ### 7. Bước 5: Kiểm tra và commit
 
 ```bash
-mda dld douyin-advanced "https://www.douyin.com/video/..." --des
+mda dld douyin-advanced "https://www.douyin.com/video/..." --info
 mda dld douyin-advanced "https://www.douyin.com/user/..." --folder "data/video/output"
 ```
 

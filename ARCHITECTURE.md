@@ -35,7 +35,7 @@ argparse + dispatcher
   |              src/features/downloader/douyin_downloader.py (douyin riêng)
   +-- open     -> editor/File Explorer helper
   +-- git      -> src/features/system/_media_studio_git.py
-  +-- --des    -> src/features/system/_print_feature_description.py
+  +-- --info   -> src/features/system/_print_feature_description.py (hỗ trợ alias --des)
 ```
 
 Nguyên tắc chính: `src/main.py` chỉ parse, validate cấp CLI và gọi script con. Logic xử lý thực tế nằm trong từng nhóm feature.
@@ -125,7 +125,7 @@ Các type hiện có:
 
 Flag đáng chú ý:
 
-- `--des`: in mô tả chi tiết từ `src/contents/app_features.yml`.
+- `--info`: in mô tả chi tiết từ `src/contents/app_features.yml` (vẫn hỗ trợ alias `--des`).
 - `--filename`, `--folder`, `--format`, `--threads`: dùng cho downloader.
 - `--cookies`, `--cookies-from-browser`: dùng cho downloader khi platform cần cookie.
 - `-m`, `--message`: dùng cho `mda git commit`.
@@ -141,7 +141,7 @@ Flag đáng chú ý:
 - Parse CLI bằng `argparse`.
 - Validate tham số cấp dispatcher.
 - Build command list để gọi script con bằng `subprocess.run`.
-- Điều hướng `--des` sang `src/features/system/_print_feature_description.py`.
+- Điều hướng `--info` (và `--des`) sang `src/features/system/_print_feature_description.py`.
 - Điều hướng `git commit` sang `src/features/system/_media_studio_git.py`.
 
 Các handler không nên chứa logic xử lý media nặng. Ví dụ `run_media_slice(...)` chỉ kiểm tra tham số bắt buộc, build command và gọi `src/features/media/slice_media.py`.
@@ -312,7 +312,7 @@ src/contents/app_features.yml
 Vai trò:
 
 - `help.txt`: nội dung help ngắn khi chạy `mda --help`.
-- `app_features.yml`: catalog có cấu trúc cho `mda <type> <action> --des`.
+- `app_features.yml`: catalog có cấu trúc cho `mda <type> <action> --info`.
 
 Khi thêm hoặc đổi command, cập nhật đồng thời:
 
@@ -384,7 +384,7 @@ Kiểm tra nhanh sau khi chỉnh code:
 ```bash
 python -m compileall -q src
 python src\main.py --help
-python src\main.py dld spotify --des
+python src\main.py dld spotify --info
 python src\features\downloader\run_downloader.py unknown https://example.com
 ```
 

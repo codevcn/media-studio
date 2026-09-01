@@ -5,7 +5,10 @@
 mda [[-h | --help] | <type> <action> [<value> [<extra>]]]
 
 # Available flags:
+--info            :In mô tả chi tiết của lệnh từ catalog (không thực thi).
 -h, --help        :print this help.
+-a, --anti        :Mở dự án trong Antigravity IDE (dùng cho lệnh `mda open`).
+-f, --file_explorer: Mở dự án trong Windows File Explorer (dùng cho lệnh `mda open`).
 
 # Available types:
 app               :Ứng dụng GUI (Giao diện người dùng).

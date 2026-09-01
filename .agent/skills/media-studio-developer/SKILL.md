@@ -14,7 +14,7 @@ Tài liệu này là **Quy chuẩn tác nghiệp chuẩn (SOP)** dành cho AI Ag
 ## 1. Kiến Trúc & Các Nguyên Tắc Bất Di Bất Dịch
 
 ```text
-User: mda <type> <action> [value] [extra] [limit] [flags] [--des]
+User: mda <type> <action> [value] [extra] [limit] [flags] [--info]
   │
   ├── mda.cmd / mda.ps1 (Launchers) ──► src/main.py (Central Dispatcher)
   │                                           │
@@ -32,7 +32,7 @@ User: mda <type> <action> [value] [extra] [limit] [flags] [--des]
 1. **Kiến trúc Dispatcher trung tâm (`src/main.py`):**
    - `src/main.py` là cổng điều phối duy nhất tiếp nhận tham số dòng lệnh từ người dùng.
    - Khi chạy `mda` không tham số: Kích hoạt REPL Interactive Session trong `src/utils/interactive_cli.py`.
-   - Cờ toàn cục `--des`: Tự động gọi `src/features/system/_print_feature_description.py` để in catalog định dạng màu từ `src/contents/app_features.yml`.
+   - Cờ toàn cục `--info` (và alias `--des`): Tự động gọi `src/features/system/_print_feature_description.py` để in catalog định dạng màu từ `src/contents/app_features.yml` ở 3 cấp độ (Global, Type, Action).
 2. **Không hardcode đường dẫn:** Mọi đường dẫn tuyệt đối hoặc tương đối đều phải xây dựng dựa trên `ROOT_FOLDER_PATH` trong [`src/configs/paths.py`](file:///d:/D-Documents/TOOLs/media-studio/src/configs/paths.py) hoặc helper `get_script_path()`.
 3. **Mã hóa UTF-8 Console:** Luôn đặt hàm `ensure_utf8_stdout()` với `sys.stdout.reconfigure(encoding="utf-8")` ở đầu tất cả các script để đảm bảo hiển thị tiếng Việt chuẩn xác trên Windows terminal.
 4. **Làm sạch URL (`clean_url`):** Khi làm việc với các tính năng downloader hoặc media URL, luôn gọi `clean_url(url, platform)` từ `src/utils/helpers.py` để loại bỏ tracking tags, bóc tách URL từ văn bản và loại bỏ tham số radio/mix YouTube gây lỗi.
@@ -83,12 +83,12 @@ Khi nhận yêu cầu thêm lệnh mới (ví dụ: `mda <type> <action>`):
 
 ### Bước 4: Đồng bộ tài liệu 3 lớp
 - [`src/contents/help.txt`](file:///d:/D-Documents/TOOLs/media-studio/src/contents/help.txt): Bổ sung định nghĩa action và ví dụ mẫu `// Vd: mda <type> <action> ...`.
-- [`src/contents/app_features.yml`](file:///d:/D-Documents/TOOLs/media-studio/src/contents/app_features.yml): Khai báo block YAML (ID, title, command, summary, details, parameters, flags, conditions) phục vụ cờ `--des`.
+- [`src/contents/app_features.yml`](file:///d:/D-Documents/TOOLs/media-studio/src/contents/app_features.yml): Khai báo block YAML (ID, title, command, summary, details, parameters, flags, conditions) phục vụ cờ `--info`.
 - [`PROJECT_CONTEXT.md`](file:///d:/D-Documents/TOOLs/media-studio/PROJECT_CONTEXT.md): Cập nhật cây thư mục và Bảng tra cứu Type & Action tại Mục 3.2.
 - [`README.md`](file:///d:/D-Documents/TOOLs/media-studio/README.md): Bổ sung hướng dẫn ngắn gọn cho người dùng.
 
 ### Bước 5: Kiểm thử bắt buộc (Verification)
-1. `python src/main.py <type> <action> --des` $\rightarrow$ Phải in ra đúng mô tả catalog YAML.
+1. `python src/main.py <type> <action> --info` $\rightarrow$ Phải in ra đúng mô tả catalog YAML.
 2. Kiểm tra Tab Autocomplete trong Chế độ Tương tác (`python src/main.py` -> gõ prefix + Tab).
 3. Kiểm thử cú pháp toàn dự án: `python -m compileall -q src`.
 4. Chạy lệnh thực thi thực tế kiểm tra kết quả output.
@@ -106,7 +106,7 @@ Khi chỉnh sửa một tính năng đã tồn tại:
    - Cập nhật nội dung giải thích và ví dụ trong `src/contents/help.txt`.
    - Cập nhật `command`, `summary`, `details`, `flags` trong `src/contents/app_features.yml`.
    - Cập nhật lại dòng mô tả trong `PROJECT_CONTEXT.md` và `README.md`.
-3. **Kiểm thử lại:** Chạy lệnh `--des`, biên dịch `python -m compileall -q src` và test thực thi.
+3. **Kiểm thử lại:** Chạy lệnh `--info`, biên dịch `python -m compileall -q src` và test thực thi.
 
 ---
 
@@ -138,6 +138,6 @@ Khi xóa bỏ hoàn toàn một lệnh hoặc một nhóm lệnh:
 | `src/utils/helpers.py` | Helpers & URL Sanitizer | Xử lý file/path helpers, chuẩn hóa URL downloader |
 | `src/utils/interactive_cli.py` | REPL & Tab Autocomplete | Thêm/sửa/xóa Type hoặc Action trong autocomplete |
 | `src/contents/help.txt` | Text Help Guide | Thêm/sửa/xóa Type hoặc Action |
-| `src/contents/app_features.yml` | Catalog cho cờ `--des` | Thêm/sửa/xóa Type hoặc Action |
+| `src/contents/app_features.yml` | Catalog cho cờ `--info` | Thêm/sửa/xóa Type hoặc Action |
 | `PROJECT_CONTEXT.md` | Master Context cho AI Agent | Luôn luôn cập nhật đồng bộ sau mọi thay đổi |
 | `README.md` | Hướng dẫn người dùng | Cập nhật khi thay đổi cú pháp hoặc tính năng lớn |

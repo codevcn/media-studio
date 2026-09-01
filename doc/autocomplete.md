@@ -109,9 +109,17 @@ mda > video rm-logo "D:\data\video.mp4" 5s 10
 
 ---
 
+### 2.4. Duyệt Lịch Sử Lệnh (Command History Navigation)
+- Nhấn phím **`[↑]` (Mũi tên Lên)**: Duyệt lùi về các câu lệnh đã thực thi trước đó trong lịch sử (từ lệnh gần nhất đến các lệnh cũ hơn).
+- Nhấn phím **`[↓]` (Mũi tên Xuống)**: Duyệt tiến về các câu lệnh mới hơn.
+- **Bảo tồn nội dung nháp (Draft Preservation):** Nếu bạn đang gõ dở một chuỗi lệnh và nhấn `[↑]` để xem lại lệnh cũ, chuỗi đang gõ sẽ được lưu tạm. Khi nhấn `[↓]` quay trở lại cuối danh sách, chuỗi nháp ban đầu sẽ được khôi phục nguyên vẹn.
+- **Tự động lưu giữa các phiên:** Lịch sử lệnh được tự động lưu vào file `.mda_history` trong `data/credentials/` (tối đa 200 lệnh gần nhất).
+
+---
+
 ## 3. Kiến Trúc Kỹ Thuật (Architecture)
 
-Toàn bộ logic tương tác và auto-complete được tổ chức trong module:
+Toàn bộ logic tương tác, auto-complete và command history được tổ chức trong module:
 📍 **`src/utils/interactive_cli.py`**
 
 ```mermaid
@@ -119,29 +127,33 @@ graph TD
     A["mda (Không tham số)"] --> B["src/main.py"]
     B --> C["run_interactive_session()"]
     C --> D["print_types_overview()"]
-    C --> E["autocomplete_input(prompt)"]
+    C --> E["autocomplete_input(prompt, history)"]
     
     subgraph "Vòng Lặp Đọc Ký Tự (Key Listener)"
         E --> F{"msvcrt.getwch()"}
         F -- "[Tab]" --> G["get_tab_completion()"]
         G --> H["Tra cứu TYPE_ACTION_MAP & Xoay vòng Cycle"]
         H --> I["Vẽ lại Buffer với ANSI Codes (Colorama)"]
+        F -- "[↑]/[↓] Mũi tên" --> Hist["Duyệt history_index & Lấy lệnh cũ/mới"]
+        Hist --> I
         F -- "[Backspace]" --> J["Xóa ký tự cuối & Reset Tab State"]
         F -- "Ký tự in được" --> K["Append vào Buffer & Tô màu"]
         F -- "[Enter]" --> L["Trả về buffer chuỗi lệnh"]
     end
     
-    L --> M["shlex.split() Phân tích cú pháp"]
-    M --> N["Subprocess Gọi main.py Thực thi lệnh"]
-    N --> E
+    L --> M["Ghi nhận lịch sử (append_history & save_history)"]
+    M --> N["shlex.split() Phân tích cú pháp"]
+    N --> P["Subprocess Gọi main.py Thực thi lệnh"]
+    P --> E
 ```
 
 ### Các thành phần chính trong mã nguồn:
 1. **`TYPE_ACTION_MAP` (dict)**: Bảng dữ liệu định nghĩa 9 nhóm `Type` (`app`, `audio`, `dld`, `git`, `image`, `media`, `ocr`, `open`, `video`) cùng danh sách toàn bộ các `Action` tương ứng (sắp xếp A-Z).
 2. **`TYPE_DESCRIPTIONS` (dict)**: Tóm tắt 1 dòng mục đích sử dụng cho từng `Type`.
-3. **`get_tab_completion()`**: Hàm thuần logic tính toán chuỗi gợi ý tiếp theo dựa trên buffer hiện tại, trạng thái tab trước đó (`last_was_tab`) và chỉ số xoay vòng (`cycle_idx`).
-4. **`autocomplete_input()`**: Hàm bắt sự kiện bàn phím mức thấp trên Windows (`msvcrt`), điều khiển buffer, tô màu ANSI và cập nhật giao diện console. Hỗ trợ kiểm tra `sys.stdin.isatty()` để tương thích tốt cả trong môi trường non-TTY.
-5. **`run_interactive_session()`**: REPL controller quản lý vòng đời phiên làm việc, phân tách lệnh bằng `shlex`, tự động bóc tách từ khóa `mda` thừa và gọi subprocess thực thi an toàn mà không làm sập session khi gặp lỗi hoặc hủy lệnh.
+3. **`load_history()` / `save_history()` / `append_history()`**: Quản lý lưu trữ và đọc lịch sử lệnh từ `data/credentials/.mda_history`.
+4. **`get_tab_completion()`**: Hàm thuần logic tính toán chuỗi gợi ý tiếp theo dựa trên buffer hiện tại, trạng thái tab trước đó (`last_was_tab`) và chỉ số xoay vòng (`cycle_idx`).
+5. **`autocomplete_input(prompt, history)`**: Hàm bắt sự kiện bàn phím mức thấp trên Windows (`msvcrt`), xử lý Tab Auto-complete, điều hướng lịch sử bằng `[↑]/[↓]`, tô màu ANSI và cập nhật console. Hỗ trợ kiểm tra `sys.stdin.isatty()` để tương thích tốt trong môi trường non-TTY.
+6. **`run_interactive_session()`**: REPL controller quản lý vòng đời phiên làm việc, phân tách lệnh bằng `shlex`, tự động bóc tách từ khóa `mda` thừa và gọi subprocess thực thi an toàn mà không làm sập session khi gặp lỗi hoặc hủy lệnh.
 
 ---
 
@@ -236,7 +248,7 @@ Khi đang ở trong phiên làm việc tương tác `mda > `, bạn có thể s�
 | `type`, `types`, `list`, `ls` | In lại bảng tổng quan danh mục Type và Action. |
 | `cls`, `clear` | Xóa màn hình terminal và in lại bảng gợi ý. |
 | `q`, `quit`, `exit` | Thoát khỏi phiên làm việc tương tác. |
-| `<cmd> --des` | Xem mô tả chi tiết, cú pháp và điều kiện thực thi của lệnh đó. |
+| `<cmd> --info` | Xem mô tả chi tiết, cú pháp và điều kiện thực thi của lệnh đó (hỗ trợ alias `--des`). |
 | Gõ `mda <cmd>` | Hệ thống tự động nhận diện và loại bỏ từ khóa `mda` thừa nếu bạn lỡ tay gõ đầy đủ (vd: `mda dld update` -> tự chạy `dld update`). |
 
 ---
