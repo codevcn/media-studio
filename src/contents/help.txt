@@ -67,6 +67,10 @@ dld               :Các tính năng tải xuống từ mạng xã hội (Downloa
                   // Vd: mda dld spotify "https://open.spotify.com/playlist/..." audio --folder "C:\Downloads" --format "mp3"
 
 # Example:
+Lệnh `mda --help` sẽ in ra hướng dẫn sử dụng và danh sách các lệnh có sẵn.
+Lệnh `mda --version` sẽ in ra thông tin phiên bản và mô tả ngắn của công cụ.
 Lệnh `mda app player` sẽ khởi động ứng dụng Video Player.
 Lệnh `mda audio extract "input.mp4" "output.wav"` sẽ tách âm thanh từ video sang định dạng WAV.
+Lệnh `mda video --info` sẽ in ra mô tả về lệnh "mda video".
+Lệnh `mda video locate-logo --info` sẽ in ra mô tả về lệnh "mda video locate-logo".
 ===========================================
