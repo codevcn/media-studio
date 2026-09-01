@@ -1,322 +1,396 @@
-﻿# 📘 Hướng Dẫn Triển Khai Logic Cờ `--info` Trong Mod CLI
+﻿# 📖 Tài Liệu Chi Tiết Tính Năng `--info` Trong Media Studio CLI (`mda`)
 
-Tài liệu này cung cấp toàn bộ kiến trúc, luồng dữ liệu, quy chuẩn cấu trúc và hướng dẫn từng bước để triển khai, bảo trì và tích hợp cơ chế tra cứu tính năng qua cờ **`--info`** trong hệ thống **Mod CLI (`mod`)**.
+Tài liệu này mô tả toàn diện kiến trúc kỹ thuật, luồng xử lý dữ liệu, thuật toán so khớp lệnh và cơ chế hiển thị định dạng đầu ra của tính năng **Self-Documenting CLI (`--info`)** trong hệ thống **Media Studio CLI (`mda`)**.
 
 ---
 
 ## 📑 Mục Lục
-1. [Tổng Quan & Mục Đích](#1-tổng-quan--mục-đích)
-2. [Sơ Đồ Kiến Trúc & Luồng Dữ Liệu](#2-sơ-đồ-kiến-trúc--luồng-dữ-liệu)
-3. [Cấu Trúc Catalog Dữ Liệu (`app_features.yml`)](#3-cấu-trúc-catalog-dữ-liệu-app_featuresyml)
-4. [Logic Bóc Tách Cờ Tại Central Dispatcher](#4-logic-bóc-tách-cờ-tại-central-dispatcher)
-5. [Logic Xử Lý & Hiển Thị (`_print_feature_description.py`)](#5-logic-xử-lý--hiển-thị-_print_feature_descriptionpy)
-6. [Cơ Chế Nạp Tài Liệu Nâng Cao (`raw_file` & `raw_text`)](#6-cơ-chế-nạp-tài-liệu-nâng-cao-raw_file--raw_text)
-7. [Hướng Dẫn Từng Bước Khi Thêm/Sửa Lệnh Mới](#7-hướng-dẫn-từng-bước-khi-thêmsửa-lệnh-mới)
-8. [Bộ Test Case Nghiệm Thu (Verification)](#8-bộ-test-case-nghiệm-thu-verification)
+1. [Tổng Quan & Triết Lý Thiết Kế](#1-tổng-quan--triết-lý-thiết-kế)
+2. [Cấu Trúc Catalog Dữ Liệu (`app_features.yml`)](#2-cấu-trúc-catalog-dữ-liệu-app_featuresyml)
+3. [Cơ Chế Bóc Tách Cờ Sớm Tại Central Dispatcher (`src/main.py`)](#3-cơ-chế-bóc-tách-cờ-sớm-tại-central-dispatcher-srcmainpy)
+4. [Cách In Ra Mô Tả Theo 3 Cấp Độ (3-Level Output)](#4-cách-in-ra-mô-tả-theo-3-cấp-độ-3-level-output)
+   - [4.1. Cấp 1: Tra cứu Toàn Cục (`mda --info`)](#41-cấp-1-tra-cứu-toàn-cục-mda---info)
+   - [4.2. Cấp 2: Tra cứu Cấp Nhóm Lệnh (`mda <type> --info`)](#42-cấp-2-tra-cứu-cấp-nhóm-lệnh-mda-type---info)
+   - [4.3. Cấp 3: Tra cứu Cấp Hành Động Cụ Thể (`mda <type> <action> --info`)](#43-cấp-3-tra-cứu-cấp-hành-động-cụ-thể-mda-type-action---info)
+5. [Động Cơ Hiển Thị & Bảng Màu ANSI (`_print_feature_description.py`)](#5-động-cơ-hiển-thị--bảng-màu-ansi-_print_feature_descriptionpy)
+   - [5.1. Định dạng bảng ANSI chuẩn](#51-định-dạng-bảng-ansi-chuẩn)
+   - [5.2. Hỗ trợ tài liệu Markdown mở rộng (`raw_file` / `raw_text`)](#52-hỗ-trợ-tài-liệu-markdown-mở-rộng-raw_file--raw_text)
+   - [5.3. Xử lý cảnh báo an toàn (`Exit Code 0`)](#53-xử-lý-cảnh-báo-an-toàn-exit-code-0)
+6. [Thuật Toán So Khớp Lệnh (`is_command_match`)](#6-thuật-toán-so-khớp-lệnh-is_command_match)
+7. [Bảng Lệnh Mẫu Tra Cứu Thực Tế](#7-bảng-lệnh-mẫu-tra-cứu-thực-tế)
+8. [Quy Chuẩn Đồng Bộ Khi Thêm Tính Năng Mới (Developer SOP)](#8-quy-chuẩn-đồng-bộ-khi-thêm-tính-năng-mới-developer-sop)
 
 ---
 
-## 1. Tổng Quan & Mục Đích
+## 1. Tổng Quan & Triết Lý Thiết Kế
 
-Cờ **`--info`** là một trong hai **Dispatcher Flags** toàn cục cốt lõi của Mod CLI (cùng với cờ `-a` / `--antigravity-IDE`).
+Trong các công cụ CLI xử lý đa phương tiện phức tạp, người dùng thường gặp khó khăn khi phải ghi nhớ nhiều cờ tùy chọn, định dạng tham số (tọa độ pixel, mốc thời gian, bitrate, preset...). 
 
-### Mục đích cốt lõi:
-- **Tra cứu không thực thi:** Cho phép người dùng hoặc AI Agent xem cú pháp, tóm tắt nghiệp vụ, giải thích chi tiết và điều kiện tiên quyết của bất kỳ câu lệnh nào mà **không kích hoạt logic thực thi nghiệp vụ**.
-- **Tra cứu linh hoạt 3 cấp độ:**
-  1. **Cấp hệ thống (Toàn bộ tool):** `mod --info`
-  2. **Cấp nhóm lệnh (Type level):** `mod <type> --info` (ví dụ: `mod gist --info`, `mod open --info`)
-  3. **Cấp hành động cụ thể (Action level):** `mod <type> <action> --info` (ví dụ: `mod gdrive sync --info`, `mod file delete --info`)
-- **Vị trí tự do:** Người dùng có thể đặt cờ `--info` ở bất kỳ vị trí nào trong câu lệnh (cuối dòng, giữa các tham số), Dispatcher sẽ tự động tách lọc.
+Tính năng **`--info`** được xây dựng theo triết lý **Self-Documenting CLI (Tự làm tài liệu)**:
+* **Tra cứu nội dòng tức thì:** Cho phép xem hướng dẫn chi tiết của từng lệnh ngay trong terminal mà không cần mở trình duyệt hay đọc mã nguồn.
+* **Chặn thực thi an toàn (Non-execution Guarantee):** Khi cờ `--info` xuất hiện, hệ thống **tuyệt đối không chạy logic nghiệp vụ** (không encode video, không tải mạng, không chạy OCR).
+* **Vị trí tự do (Position-Agnostic):** Cờ `--info` có thể đặt ở bất kỳ đâu trong câu lệnh (đầu, giữa các tham số, hoặc cuối cùng).
+* **Tương thích ngược 100%:** Hỗ trợ alias `--des` ngầm cho các kịch bản hoặc thói quen cũ.
 
----
-
-## 2. Sơ Đồ Kiến Trúc & Luồng Dữ Liệu
-
-```text
-User Input: mod <type> <action> [args...] [--info]
-   │
-   ▼
-mod.cmd (@py src\main.py %*)
-   │
-   ▼
-src/main.py (Central Dispatcher)
-   ├── 1. Duyệt sys.argv[1:]: Nếu thấy '--info' -> bật info_flag = True, loại bỏ khỏi feature_args
-   ├── 2. Tách: type_included = feature_args[0], action_included = feature_args[1]
-   │
-   ├── [Nếu info_flag == True]
-   │       └── Gọi: print_feature_description(type_included, action_included)
-   │               └── Subprocess gọi: src/features/system/_print_feature_description.py
-   │                       │
-   │                       ├── Đọc catalog: src/contents/app_features.yml
-   │                       ├── So khớp block Type và Action
-   │                       ├── [Nếu có raw_file / raw_text] ──► Đọc & in trực tiếp nội dung Markdown
-   │                       └── [Mặc định] ──► In bảng màu ANSI (Title, Lệnh, Tóm tắt, Chi tiết, Điều kiện)
-   │                       └── sys.exit(0)
-   │
-   └── [Nếu info_flag == False] ──► Dispatch bình thường tới Feature Script
+```mermaid
+flowchart LR
+    UserInput["mda <type> <action> [params] --info"] --> Dispatcher["Central Dispatcher (src/main.py)"]
+    Dispatcher -->|Phát hiện --info / --des| Extractor["Bóc tách cmd_type & cmd_action"]
+    Extractor --> Engine["Feature Description Engine (_print_feature_description.py)"]
+    Engine --> Catalog[("src/contents/app_features.yml")]
+    Catalog --> Formatter["Định Dạng ANSI Table / Raw Markdown"]
+    Formatter --> Terminal["In ra Terminal & Exit(0)"]
 ```
 
 ---
 
-## 3. Cấu Trúc Catalog Dữ Liệu (`app_features.yml`)
+## 2. Cấu Trúc Catalog Dữ Liệu (`app_features.yml`)
 
-File `src/contents/app_features.yml` là **Single Source of Truth** cung cấp dữ liệu mô tả cho cờ `--info`.
+Dữ liệu mô tả tính năng được quản lý tập trung tại file YAML duy nhất:
+📍 **[`src/contents/app_features.yml`](file:///d:/D-Documents/TOOLs/media-studio/src/contents/app_features.yml)**
 
-### 3.1. Schema Chuẩn Cho Mỗi Action (Standard Format)
-
+### Cấu trúc Schema chuẩn:
 ```yaml
-mod_tool:
+mdia_tool:
+  # 1. Danh sách các cờ điều phối toàn cục (Dispatcher Flags)
   dispatcher_flags:
     - flag: "--info"
-      description: "In mô tả chi tiết command từ app_features.yml."
-    - flag: "-a / --antigravity-IDE"
-      description: "Dùng Antigravity IDE thay vì VSCode."
+      description: "In mô tả chi tiết của lệnh từ app_features.yml (không thực thi lệnh)."
+    - flag: "-a / --anti"
+      description: "Dùng Antigravity IDE thay vì VSCode khi mở dự án."
+    - flag: "-f / --file_explorer"
+      description: "Mở thư mục dự án trong Windows File Explorer."
+    - flag: "-h / --help"
+      description: "In toàn bộ hướng dẫn sử dụng ra terminal."
 
+  # 2. Danh mục 9 nhóm lệnh (Types) và các hành động (Actions)
   types:
-    - name: "<tên_type>"
-      description: "<Mô tả ngắn về nhóm lệnh>"
+    - name: "video"
+      description: "Các tính năng xử lý video (Xóa logo/watermark, trích frames)"
       actions:
-        - id: "ACTION <XX>"
-          title: "<Tên tính năng ngắn gọn, rõ ràng>"
-          command: "mod <type> <action> [args...]"
-          summary: "<Tóm tắt 1-2 câu về tác vụ chính>"
-          details: "<Giải thích sâu về các cờ con, cách thức xử lý bên dưới>"
-          conditions: "<Các điều kiện tiên quyết: PATH, API token, OS, file .env...>"
+        - id: "ACTION 02"
+          title: "Xóa Watermark/Logo"
+          command: "mda video rm-logo <input_path> <x1,y1,x2,y2> [output_path]"
+          summary: "Tự động xóa watermark/logo khỏi video theo vùng tọa độ chỉ định bằng FFmpeg delogo."
+          details: "Chạy script video_watermark_remover.py. Nhận hai góc (x1,y1) và (x2,y2), tự tính w, h rồi áp dụng filter delogo."
+          parameters: "<input_path>: Video đầu vào. <x1,y1,x2,y2>: Tọa độ hai góc vùng cần xóa. [output_path]: Tùy chọn đường dẫn đầu ra."
+          flags: "Không có flags tùy chọn."
+          conditions: "input_path và bộ tọa độ là bắt buộc. x2 > x1, y2 > y1. Yêu cầu FFmpeg."
 ```
 
-### 3.2. Quy Tắc Khai Báo Trường `command`
-- Nếu lệnh có nhiều alias/cú pháp tương đương, dùng dấu gạch đứng `|`:
-  ```yaml
-  command: "mod gdrive url <remote_path> | mod gdrive link <remote_path>"
-  ```
-- Dùng dấu `<...>` cho tham số bắt buộc và `[...]` cho tham số tùy chọn:
-  ```yaml
-  command: "mod file rename <folder_path> [prefix]"
-  ```
+### Các trường dữ liệu trong từng Action:
+| Trường | Bắt buộc | Ý nghĩa |
+| :--- | :---: | :--- |
+| `id` | Có | Mã định danh chuẩn hóa (ví dụ: `ACTION 02`, `ACTION 06b`...). |
+| `title` | Có | Tiêu đề tính năng ngắn gọn. |
+| `command` | Có | Cú pháp câu lệnh mẫu (dùng `\|` để ngăn cách các alias). |
+| `summary` | Có | Tóm tắt 1-2 câu về công dụng của lệnh. |
+| `details` | Có | Giải thích sâu về cơ chế kỹ thuật (thuật toán, filter FFmpeg, thư viện sử dụng). |
+| `parameters` | Tùy chọn | Mô tả từng tham số vị trí (`<bắt_buộc>`, `[tùy_chọn]`). |
+| `flags` | Tùy chọn | Mô tả các cờ tùy chọn bổ sung (ví dụ: `--threads`, `--output`...). |
+| `conditions` | Tùy chọn | Điều kiện tiên quyết (yêu cầu file, thư viện, GPU, PATH...). |
+| `raw_file` | Tùy chọn | Đường dẫn file Markdown mở rộng để in trực tiếp (nếu có). |
+| `raw_text` | Tùy chọn | Khối văn bản thô đa dòng thay thế cho bảng ANSI. |
 
 ---
 
-## 4. Logic Bóc Tách Cờ Tại Central Dispatcher
+## 3. Cơ Chế Bóc Tách Cờ Sớm Tại Central Dispatcher (`src/main.py`)
 
-### 4.1. Trong `src/main.py` (CLI Entrypoint)
+Trong [`src/main.py`](file:///d:/D-Documents/TOOLs/media-studio/src/main.py), hàm `main()` tiến hành bóc tách cờ `--info` và `--des` ngay khi vừa nhận `sys.argv[1:]`:
 
 ```python
-# 1. Bóc tách flag trước khi xác định type và action
-raw_args = sys.argv[1:]
-info_flag = False
-antigravity_flag = False
-feature_args = []
+def main():
+    ensure_utf8_stdout()
+    raw_args = sys.argv[1:]
 
-for arg in raw_args:
-    if arg == "--info":
-        info_flag = True
-    elif arg in ("-a", "--antigravity-IDE"):
-        antigravity_flag = True
-    else:
-        feature_args.append(arg)
+    # 1. Bóc tách Dispatcher Flags toàn cục trước
+    info_flag = False
+    feature_args = []
 
-# 2. Xử lý khi không truyền type (gõ `mod --info` hoặc `mod`)
-if not feature_args:
+    for arg in raw_args:
+        if arg in ("--info", "--des"):
+            info_flag = True
+        else:
+            feature_args.append(arg)
+
+    # 2. Xử lý tra cứu mô tả qua --info / --des (vị trí tự do)
     if info_flag:
-        print_feature_description(None, None)
+        pos_args = [a for a in feature_args if not a.startswith("-")]
+        cmd_type = pos_args[0] if len(pos_args) > 0 else None
+        cmd_action = pos_args[1] if len(pos_args) > 1 else None
+
+        script_path = get_script_path("features/system/_print_feature_description.py")
+        run_cmd = [sys.executable, script_path]
+        if cmd_type:
+            run_cmd.extend(["--type", cmd_type])
+        if cmd_action:
+            run_cmd.extend(["--action", cmd_action])
+
+        subprocess.run(run_cmd)
+        sys.exit(0)  # Dừng ngay lập tức, không chạy logic nghiệp vụ
+```
+
+### Ưu điểm của giải pháp:
+1. **Position-Agnostic:** Dù người dùng gõ `mda --info video rm-logo "input.mp4"` hay `mda video rm-logo "input.mp4" --info`, danh sách `pos_args` vẫn trích xuất chính xác `cmd_type = "video"` và `cmd_action = "rm-logo"`.
+2. **Ngắt luồng an toàn:** Thực hiện `sys.exit(0)` ngay sau khi in thông tin, bảo đảm các tác vụ nặng không bao giờ bị kích hoạt nhầm.
+
+---
+
+## 4. Cách In Ra Mô Tả Theo 3 Cấp Độ (3-Level Output)
+
+Động cơ [`_print_feature_description.py`](file:///d:/D-Documents/TOOLs/media-studio/src/features/system/_print_feature_description.py) hỗ trợ tra cứu thông minh theo 3 cấp độ:
+
+```mermaid
+graph TD
+    Query{"Tham số truyền vào?"}
+    Query -->|Không có type & action| L1["CẤP 1 (Tool Level)\nmda --info\nIn Header, Dispatcher flags, 9 Types"]
+    Query -->|Có type, không có action| L2["CẤP 2 (Type Level)\nmda <type> --info\nIn danh sách actions của nhóm"]
+    Query -->|Có cả type và action| L3["CẤP 3 (Action Level)\nmda <type> <action> --info\nIn bảng ANSI chi tiết của action"]
+```
+
+---
+
+### 4.1. Cấp 1: Tra cứu Toàn Cục (`mda --info`)
+* **Lệnh kích hoạt:** `mda --info`
+* **Nội dung hiển thị:**
+  1. Header biểu ngữ Media Studio CLI.
+  2. Cú pháp chung và hướng dẫn vào chế độ tương tác.
+  3. Bảng danh sách các cờ điều phối toàn cục (`dispatcher_flags`).
+  4. Danh sách toàn bộ 9 nhóm lệnh (`Types`) kèm tóm tắt mục đích.
+  5. Dòng gợi ý cú pháp tra cứu cấp sâu hơn.
+
+#### Mẫu đầu ra trên Terminal:
+```text
+==================================================================
+🚀 Media Studio CLI (mda) — Bộ Công Cụ Xử Lý Media Đa Năng
+==================================================================
++) Cú pháp chung: mda <type> <action> [tham_số...] [flags]
++) Chế độ tương tác: Chạy 'mda' không tham số để vào REPL + Tab Autocomplete.
+
+Các cờ điều phối toàn cục (Dispatcher Flags):
+  --info                 : In mô tả chi tiết của lệnh từ app_features.yml (không thực thi lệnh).
+  -a / --anti            : Dùng Antigravity IDE thay vì VSCode khi mở dự án.
+  -f / --file_explorer   : Mở thư mục dự án trong Windows File Explorer.
+  -h / --help            : In toàn bộ hướng dẫn sử dụng ra terminal.
+
+Danh sách nhóm lệnh (Types):
+  open       : Mở project trong IDE (VSCode / Antigravity) hoặc File Explorer
+  app        : Ứng dụng GUI (Trình phát video kép đối chiếu)
+  video      : Các tính năng xử lý video (Xóa logo/watermark, trích frames)
+  audio      : Các tính năng xử lý âm thanh
+  image      : Các tính năng xử lý hình ảnh (Lật ảnh, xoay ảnh)
+  media      : Các tính năng xử lý media đa dụng (Cắt slice, chia theo dung lượng / thời lượng)
+  ocr        : Nhận diện văn bản từ hình ảnh (PaddleOCR)
+  git        : Thao tác tự động hóa Git
+  dld        : Các tính năng tải xuống Media đa nền tảng (Downloader)
+
+💡 Tra cứu chi tiết: Gõ mda <type> --info hoặc mda <type> <action> --info
+==================================================================
+```
+
+---
+
+### 4.2. Cấp 2: Tra cứu Cấp Nhóm Lệnh (`mda <type> --info`)
+* **Lệnh kích hoạt:** `mda video --info`, `mda dld --info`, `mda media --info`...
+* **Nội dung hiển thị:**
+  - Header tiêu đề nhóm lệnh kèm mô tả nhóm.
+  - Liệt kê toàn bộ các action thuộc nhóm: Tên tính năng, Lệnh thực thi mẫu, Tóm tắt công dụng.
+  - Gợi ý câu lệnh tra cứu chi tiết từng action (`mda <type> <action> --info`).
+  - *(Đặc biệt: Nếu nhóm lệnh chỉ có đúng 1 action duy nhất như `mda open --info`, hệ thống sẽ tự động in chi tiết action đó).*
+
+#### Mẫu đầu ra trên Terminal (Ví dụ `mda dld --info`):
+```text
+=== NHÓM LỆNH: DLD (Các tính năng tải xuống Media đa nền tảng (Downloader)) ===
+──────────────────────────────────────────────────────────────────────
+  • Tải Video / Audio từ mạng xã hội
+    Lệnh:    mda dld <platform> <url> | mda dld ytb | mda dld ytb-music | mda dld fb | mda dld insta | mda dld tiktok | mda dld twitter | mda dld x | mda dld douyin | mda dld bilibili | mda dld bili | mda dld bilili | mda dld soundcloud | mda dld scloud | mda dld spot | mda dld spotify
+    Tóm tắt: Tải video, audio hoặc phụ đề đa nền tảng. YouTube/YT Music/Facebook/Instagram/TikTok/Twitter/Bilibili/SoundCloud dùng yt-dlp + aria2c. Spotify dùng spotDL (chỉ audio). Douyin dùng jiji262/douyin-downloader (no-watermark, hỗ trợ batch profile).
+
+  • Liệt kê danh sách nền tảng được hỗ trợ
+    Lệnh:    mda dld list
+    Tóm tắt: In ra danh sách các nền tảng và các alias hỗ trợ cho lệnh mda dld.
+
+  • Cập nhật yt-dlp lên bản mới nhất
+    Lệnh:    mda dld update
+    Tóm tắt: Tự động nâng cấp gói yt-dlp lên phiên bản mới nhất từ PyPI.
+
+💡 Xem chi tiết từng lệnh: Gõ mda dld <action> --info
+──────────────────────────────────────────────────────────────────────
+```
+
+---
+
+### 4.3. Cấp 3: Tra cứu Cấp Hành Động Cụ Thể (`mda <type> <action> --info`)
+* **Lệnh kích hoạt:** `mda video rm-logo --info`, `mda media slice --info`, `mda ocr scan --info`, `mda dld spot --info`...
+* **Nội dung hiển thị:**
+  - Tiêu đề tính năng kèm mã `[ACTION ID]`.
+  - Cú pháp lệnh chính xác (`+) Lệnh:`).
+  - Tóm tắt công dụng (`+) Tóm tắt:`).
+  - Cơ chế kỹ thuật chi tiết (`+) Chi tiết:`).
+  - Giải thích từng tham số bắt buộc / tùy chọn (`+) Tham số:`).
+  - Danh sách cờ bổ sung (`+) Flags:`).
+  - Yêu cầu môi trường & điều kiện tiên quyết (`+) Điều kiện:`).
+
+#### Mẫu đầu ra trên Terminal (Ví dụ `mda ocr scan --info`):
+```text
+--- Tính năng: Quét và nhận diện chữ trong ảnh [ACTION 06b] ---
++) Lệnh:	mda ocr scan <input_path> [--output log|file] [--dest <path>]
++) Tóm tắt:	Nhận diện toàn bộ văn bản trong file ảnh bằng PaddleOCR và xuất ra terminal hoặc file text.
++) Chi tiết:	Chạy script scan_ocr.py. Tự động cấu hình tắt PIR API và MKLDNN để vận hành ổn định trên CPU mà không bị crash lỗi PaddlePaddle.
++) Tham số:	<input_path>: Đường dẫn ảnh cần quét chữ.
++) Flags:	--output log|file: Xuất kết quả ra log terminal hoặc lưu vào file text (mặc định: log). /// --dest <path>: Đường dẫn file text đích nếu chọn --output file.
++) Điều kiện:	Yêu cầu paddlepaddle==2.6.2 và paddleocr==2.8.1.
+```
+
+---
+
+## 5. Động Cơ Hiển Thị & Bảng Màu ANSI (`_print_feature_description.py`)
+
+### 5.1. Định dạng bảng ANSI chuẩn
+Hàm `render_action_block(action: dict)` sử dụng bảng mã màu ANSI để định dạng thông tin trực quan:
+
+| Mục hiển thị | Mã ANSI / Màu sắc | Ý nghĩa |
+| :--- | :--- | :--- |
+| **Tiêu đề tính năng** | `\033[36;1m` (Cyan Bold) | Nổi bật tiêu đề và ID tính năng. |
+| **Nhãn `+) Lệnh / Tóm tắt / Chi tiết...`** | `\033[32;1m` (Green Bold) | Phân tách rõ ràng các đầu mục. |
+| **Cú pháp lệnh** | `\033[33m` (Yellow) | Giúp người dùng dễ dàng copy/paste lệnh. |
+| **Nội dung tóm tắt & tham số** | `\033[97m` (White) | Rõ ràng, dễ đọc trên nền terminal tối. |
+| **Giải thích chi tiết & Điều kiện** | `\033[2m` (Dim / Gray) | Giảm độ chói cho các đoạn giải thích kỹ thuật dài. |
+
+```python
+def render_action_block(action: dict):
+    title = action.get("title", "Không có tiêu đề")
+    act_id = action.get("id", "")
+    id_badge = f" [{act_id}]" if act_id else ""
+
+    print()
+    print(f"{CYAN_BOLD}--- Tính năng: {title}{id_badge} ---{RESET}")
+    print(f"{GREEN_BOLD}+) Lệnh:{RESET}\t{YELLOW}{action.get('command', 'Không có')}{RESET}")
+    print(f"{GREEN_BOLD}+) Tóm tắt:{RESET}\t{WHITE}{action.get('summary', 'Không có')}{RESET}")
+    print(f"{GREEN_BOLD}+) Chi tiết:{RESET}\t{DIM}{action.get('details', 'Không có')}{RESET}")
+
+    if action.get("parameters"):
+        print(f"{GREEN_BOLD}+) Tham số:{RESET}\t{WHITE}{action.get('parameters')}{RESET}")
+    if action.get("flags"):
+        print(f"{GREEN_BOLD}+) Flags:{RESET}\t{WHITE}{action.get('flags')}{RESET}")
+    if action.get("conditions"):
+        print(f"{GREEN_BOLD}+) Điều kiện:{RESET}\t{DIM}{action.get('conditions')}{RESET}")
+    print()
+```
+
+---
+
+### 5.2. Hỗ trợ tài liệu Markdown mở rộng (`raw_file` / `raw_text`)
+Đối với các tính năng có tài liệu tích hợp chuyên sâu (ví dụ hướng dẫn cấu hình Cookies Douyin, Spotify API), schema YAML cho phép khai báo trường `raw_file`:
+
+```python
+    # Kiểm tra raw_file
+    raw_file = action.get("raw_file")
+    if raw_file:
+        candidate_paths = [
+            Path(ROOT_FOLDER_PATH) / raw_file if ROOT_FOLDER_PATH else None,
+            Path(src_dir) / raw_file,
+            Path(src_dir).parent / raw_file,
+            Path(raw_file),
+        ]
+        for cp in candidate_paths:
+            if cp and cp.is_file():
+                with open(cp, "r", encoding="utf-8", errors="replace") as f:
+                    print(f"\n{f.read().strip()}\n")
+                return
+```
+Khi có `raw_file`, toàn bộ nội dung file Markdown sẽ được in trực tiếp ra terminal một cách nguyên vẹn.
+
+---
+
+### 5.3. Xử lý cảnh báo an toàn (`Exit Code 0`)
+Nếu người dùng gõ nhầm một type hoặc action không tồn tại (ví dụ: `mda video unknown_act --info`), hệ thống in cảnh báo thân thiện và **thoát với mã `0`** (`sys.exit(0)`) thay vì raise exception:
+
+```text
+>>> Warn: Mặc dù loại lệnh 'video' tồn tại nhưng không tìm thấy mô tả cho action 'unknown_act'.
+```
+
+---
+
+## 6. Thuật Toán So Khớp Lệnh (`is_command_match`)
+
+Một lệnh trong catalog YAML có thể có nhiều cú pháp alias (ví dụ `mda dld ytb` hoặc `mda dld spotify`). Hàm `is_command_match` xử lý so khớp thông minh như sau:
+
+```python
+DLD_PLATFORM_ALIASES = {
+    "ytb", "ytb-music", "fb", "insta", "tiktok", "douyin",
+    "bilibili", "bili", "bilili", "soundcloud", "scloud",
+    "spot", "spotify", "twitter", "x",
+}
+
+def is_command_match(command_str: str, cmd_type: str, cmd_action: str) -> bool:
+    if not command_str:
+        return False
+
+    sub_cmds = [c.strip() for c in command_str.split("|")]
+
+    if cmd_action:
+        target_str = f"mda {cmd_type} {cmd_action}"
+        for sub_cmd in sub_cmds:
+            tokens = sub_cmd.split()
+            # 1. Khớp chính xác 3 tokens: mda <type> <action>
+            if len(tokens) >= 3 and tokens[0] == "mda" and tokens[1] == cmd_type and tokens[2] == cmd_action:
+                return True
+            # 2. Khớp chuỗi tiền tố
+            if target_str in sub_cmd or sub_cmd.startswith(target_str):
+                return True
+
+        # 3. Khớp platform alias cho Downloader (ACTION 09)
+        if cmd_type == "dld" and cmd_action in DLD_PLATFORM_ALIASES:
+            for sub_cmd in sub_cmds:
+                if "mda dld <platform>" in sub_cmd or f"mda dld {cmd_action}" in sub_cmd:
+                    return True
+        return False
     else:
-        run_interactive_session(dispatch_command, print_help)
-    sys.exit(0)
-
-# 3. Chuyển tiếp vào dispatch_command
-dispatch_command(feature_args, info_flag, antigravity_flag)
-```
-
-### 4.2. Trong `dispatch_command()`
-
-```python
-def dispatch_command(
-    feature_args: list[str],
-    info_flag: bool = False,
-    antigravity_flag: bool = False,
-):
-    type_included = feature_args[0] if len(feature_args) > 0 else None
-    action_included = feature_args[1] if len(feature_args) > 1 else None
-    remaining_args = feature_args[2:]
-
-    # Bắt cờ --info: In mô tả và dừng ngay lập tức
-    if info_flag:
-        print_feature_description(type_included, action_included)
-        sys.exit(0)
-
-    # Nếu không có --info, tiếp tục routing nghiệp vụ...
-```
-
-### 4.3. Trong `src/utils/interactive_cli.py` (Interactive Session / REPL)
-
-Trong vòng lặp REPL, các lệnh nhập vào cũng được bóc tách cờ `--info` tương tự:
-```python
-# Tách dispatcher flags
-info_flag = False
-antigravity_flag = False
-feature_args = []
-
-for arg in args:
-    if arg == "--info":
-        info_flag = True
-    elif arg in ("-a", "--antigravity-IDE"):
-        antigravity_flag = True
-    else:
-        feature_args.append(arg)
-
-dispatch_callback(feature_args, info_flag, antigravity_flag)
+        # Khớp lệnh cấp Type đơn (ví dụ mda open [-a | -f])
+        for sub_cmd in sub_cmds:
+            tokens = sub_cmd.split()
+            if tokens and tokens[0] == "mda" and len(tokens) > 1 and tokens[1] == cmd_type:
+                if len(tokens) == 2 or (len(tokens) > 2 and tokens[2].startswith(("-", "[")) and not tokens[2].startswith("<")):
+                    return True
+        return False
 ```
 
 ---
 
-## 5. Logic Xử Lý & Hiển Thị (`_print_feature_description.py`)
+## 7. Bảng Lệnh Mẫu Tra Cứu Thực Tế
 
-File `src/features/system/_print_feature_description.py` chịu trách nhiệm đọc và render dữ liệu từ YAML.
-
-### Thuật Toán Khớp Lệnh (Matching Algorithm):
-```python
-for t in types:
-    if cmd_type and t.get("name") != cmd_type:
-        continue
-
-    for a in t.get("actions", []):
-        cmd_raw = a.get("command", "")
-        cmds = [c.strip() for c in cmd_raw.split("|")]
-
-        for cmd in cmds:
-            cmd_parts = cmd.split()
-            if cmd_parts and cmd_parts[0] == "mod":
-                cmd_parts = cmd_parts[1:]
-
-            yaml_type = cmd_parts[0] if len(cmd_parts) > 0 else None
-            yaml_action = (
-                cmd_parts[1]
-                if len(cmd_parts) > 1
-                and not cmd_parts[1].startswith("<")
-                and not cmd_parts[1].startswith("[")
-                and not cmd_parts[1].startswith("-")
-                else None
-            )
-
-            target_found = False
-            # 1. Tra cứu toàn cục: `mod --info`
-            if cmd_type is None and action is None:
-                if yaml_type is None or yaml_type.startswith("-"):
-                    target_found = True
-            # 2. Tra cứu cấp type: `mod <type> --info`
-            elif cmd_type is not None and action is None:
-                if yaml_type == cmd_type and yaml_action is None:
-                    target_found = True
-            # 3. Tra cứu cấp action: `mod <type> <action> --info`
-            elif cmd_type is not None and action is not None:
-                if yaml_type == cmd_type and yaml_action == action:
-                    target_found = True
-```
-
-### Định Dạng Hiển Thị Chuẩn (ANSI Colors Output):
-Khi tìm thấy action, hệ thống format output với mã màu ANSI trực quan:
-```python
-C = "\033[36m"  # Cyan
-G = "\033[32m"  # Green
-Y = "\033[33m"  # Yellow
-W = "\033[97m"  # White bright
-D = "\033[2m"   # Dim
-R = "\033[0m"   # Reset
-
-print(f"\n{C}--- Tính năng: {a.get('title')} ---{R}")
-print(f"{G}+) Lệnh:{R}\t{Y}{a.get('command')}{R}")
-print(f"{G}+) Tóm tắt:{R}\t{W}{a.get('summary')}{R}")
-print(f"{G}+) Chi tiết:{R}\t{D}{a.get('details')}{R}")
-print(f"{G}+) Điều kiện:{R}\t{D}{a.get('conditions')}{R}\n")
-```
+| Cấp độ tra cứu | Lệnh mẫu | Kết quả hiển thị |
+| :--- | :--- | :--- |
+| **Cấp 1 (Global)** | `mda --info` | Thông tin công cụ, danh sách dispatcher flags, danh mục 9 types |
+| **Cấp 2 (Type Video)** | `mda video --info` | Tóm tắt các action: `frames`, `locate-logo`, `rm-logo` |
+| **Cấp 2 (Type Downloader)**| `mda dld --info` | Tóm tắt các action: `downloader`, `list`, `update` |
+| **Cấp 2 (Type Đơn)** | `mda open --info` | In chi tiết action `open` vì type chỉ có 1 command |
+| **Cấp 3 (Video Rm-Logo)** | `mda video rm-logo --info` | Chi tiết bộ lọc delogo FFmpeg, tọa độ pixel, điều kiện |
+| **Cấp 3 (Media Slice)** | `mda media slice --info` | Chi tiết cắt đoạn video/audio theo start/end time |
+| **Cấp 3 (OCR Scan)** | `mda ocr scan --info` | Chi tiết quét chữ bằng PaddleOCR, flags `--output` |
+| **Cấp 3 (Platform DLD)** | `mda dld spotify --info` | Chi tiết tải Spotify bằng spotDL, credentials `.env` |
+| **Vị trí tự do (Position)**| `mda video --info rm-logo "vid.mp4"` | Tự động bóc tách và in chi tiết `rm-logo` an toàn |
+| **Tương thích ngược** | `mda media slice --des` | Hoạt động bình thường như `--info` |
 
 ---
 
-## 6. Cơ Chế Nạp Tài Liệu Nâng Cao (`raw_file` & `raw_text`)
+## 8. Quy Chuẩn Đồng Bộ Khi Thêm Tính Năng Mới (Developer SOP)
 
-Đối với các module lớn, phức tạp có tài liệu hướng dẫn riêng (như GitHub Gist Manager), YAML cho phép khai báo trường **`raw_file`** hoặc **`raw_text`** để in trực tiếp file Markdown/Text thay vì format bảng ANSI ngắn gọn.
+Theo đúng quy chuẩn tại skill [`media-studio-developer`](file:///d:/D-Documents/TOOLs/media-studio/.agent/skills/media-studio-developer/SKILL.md), mỗi khi phát triển một tính năng mới (`Action`), bạn **BẮT BUỘC** phải thực hiện 4 bước sau để bảo đảm tính năng `--info` hoạt động chính xác:
 
-### Ví Dụ Khai Báo Trong `app_features.yml`:
-```yaml
-    - name: "gist"
-      description: "Quản lý CRUD & Kiểm toán dung lượng GitHub Gist"
-      actions:
-        - id: "ACTION 50b"
-          title: "Tài liệu hướng dẫn sử dụng GitHub Gist"
-          command: "mod gist"
-          raw_file: "features/gist/README.md"
-```
+1. **Bước 1 — Khai báo vào [`src/contents/app_features.yml`](file:///d:/D-Documents/TOOLs/media-studio/src/contents/app_features.yml):**
+   * Tìm đúng `type` tương ứng (hoặc thêm type mới).
+   * Tạo block action đầy đủ: `id`, `title`, `command`, `summary`, `details`, `parameters`, `flags`, `conditions`.
+2. **Bước 2 — Cập nhật [`src/contents/help.txt`](file:///d:/D-Documents/TOOLs/media-studio/src/contents/help.txt):**
+   * Thêm dòng hướng dẫn ngắn gọn cho action mới.
+3. **Bước 3 — Cập nhật [`src/utils/interactive_cli.py`](file:///d:/D-Documents/TOOLs/media-studio/src/utils/interactive_cli.py):**
+   * Khai báo action vào mảng của type trong `TYPE_ACTION_MAP` (luôn **sắp xếp theo thứ tự A-Z**).
+4. **Bước 4 — Kiểm thử tra cứu `--info`:**
+   ```powershell
+   # Kiểm tra tra cứu nhóm type
+   python src/main.py <type> --info
 
-### Logic Xử Lý Bên Dưới:
-```python
-if "raw_file" in a and a.get("raw_file"):
-    raw_rel = a.get("raw_file")
-    candidate_paths = [
-        Path(SRC_FOLDER) / raw_rel,
-        Path(PROJECT_ROOT) / raw_rel,
-        Path(raw_rel),
-    ]
-    for cp in candidate_paths:
-        if cp.is_file():
-            with open(cp, "r", encoding="utf-8", errors="replace") as f:
-                print(f"\n{f.read().strip()}\n")
-            sys.exit(0)
-    warn_user_error(f"Không tìm thấy file tài liệu: {raw_rel}")
-```
-
----
-
-## 7. Hướng Dẫn Từng Bước Khi Thêm/Sửa Lệnh Mới
-
-Khi phát triển một tính năng mới (ví dụ: `mod backup create <target>`), làm theo 4 bước sau để đảm bảo cờ `--info` hoạt động chuẩn xác:
-
-### Bước 1: Khai báo Catalog trong `src/contents/app_features.yml`
-Tìm block `types` tương ứng (hoặc tạo type mới) và thêm action:
-```yaml
-    - name: "backup"
-      description: "Quản lý sao lưu dữ liệu tự động"
-      actions:
-        - id: "ACTION 62"
-          title: "Tạo bản sao lưu mới"
-          command: "mod backup create <target_folder> [--dest <path>]"
-          summary: "Tạo file nén backup từ thư mục chỉ định."
-          details: "Tự động đánh timestamp vào tên file và lưu vào thư mục đích."
-          conditions: "Yêu cầu quyền đọc thư mục nguồn."
-```
-
-### Bước 2: Khai báo Route trong `src/main.py`
-```python
-MOD_TYPE_BACKUP = "backup"
-MOD_BACKUP_CREATE = "create"
-
-# Trong dispatch_command():
-elif type_included == MOD_TYPE_BACKUP:
-    valid_actions = [MOD_BACKUP_CREATE]
-    if action_included is None:
-        raise MissingActionError(type_included, valid_actions)
-    elif action_included not in valid_actions:
-        raise InvalidActionError(type_included, action_included, valid_actions)
-    cmd_backup(action_included, remaining_args)
-```
-
-### Bước 3: Đồng bộ `src/contents/help.txt` và `PROJECT_CONTEXT.md`
-Thêm dòng tóm tắt vào `help.txt` và bảng tra cứu lệnh trong `PROJECT_CONTEXT.md`.
-
-### Bước 4: Kiểm thử cờ `--info`
-Chạy lệnh kiểm tra:
-```bash
-python src/main.py backup create --info
-```
-
----
-
-## 8. Bộ Test Case Nghiệm Thu (Verification)
-
-| STT | Câu lệnh kiểm thử | Kết quả mong đợi |
-| :---: | :--- | :--- |
-| **1** | `mod --info` | In thông tin tính năng trợ giúp chung (`mod | mod -h`). |
-| **2** | `mod <type> <action> --info` | In đúng block Title, Lệnh, Tóm tắt, Chi tiết, Điều kiện của action đó. |
-| **3** | `mod <type> --info` (Type có `raw_file`) | Đọc và in toàn bộ nội dung file Markdown chỉ định (vd: `mod gist --info`). |
-| **4** | `mod <type> <action> arg1 arg2 --info` | Cờ `--info` đặt ở cuối vẫn được lọc ra và in mô tả thành công. |
-| **5** | `mod invalid_type invalid_act --info` | In thông báo `>>> Warn: Không tìm thấy mô tả cho lệnh...` với exit code 0. |
-| **6** | Chạy trong chế độ tương tác `mod >` | Nhập `<cmd> --info` hiển thị mô tả mà không thoát khỏi session REPL. |
+   # Kiểm tra tra cứu action vừa thêm
+   python src/main.py <type> <new_action> --info
+   ```
