@@ -5,6 +5,7 @@
 mda [[-h | --help] | <type> <action> [<value> [<extra>]]]
 
 # Available flags:
+-v, --version     :In thông tin phiên bản và mô tả của công cụ.
 --info            :In mô tả chi tiết của lệnh từ catalog (không thực thi).
 -h, --help        :print this help.
 -a, --anti        :Mở dự án trong Antigravity IDE (dùng cho lệnh `mda open`).

@@ -351,7 +351,14 @@ def main():
 
     raw_args = sys.argv[1:]
 
-    # 1. Bóc tách Dispatcher Flags toàn cục trước
+    # 1. Phiên bản: -v hoặc --version
+    if "-v" in raw_args or "--version" in raw_args:
+        from version import get_version_info
+
+        print(get_version_info())
+        sys.exit(0)
+
+    # 2. Bóc tách Dispatcher Flags toàn cục (--info, --des)
     info_flag = False
     feature_args = []
 
@@ -361,7 +368,7 @@ def main():
         else:
             feature_args.append(arg)
 
-    # 2. Xử lý tra cứu mô tả qua --info / --des (vị trí tự do)
+    # 3. Xử lý tra cứu mô tả qua --info / --des (vị trí tự do)
     if info_flag:
         pos_args = [a for a in feature_args if not a.startswith("-")]
         cmd_type = pos_args[0] if len(pos_args) > 0 else None
@@ -377,14 +384,14 @@ def main():
         subprocess.run(run_cmd)
         sys.exit(0)
 
-    # 3. Không có tham số nào: Khởi động chế độ tương tác (REPL)
+    # 4. Không có tham số nào: Khởi động chế độ tương tác (REPL)
     if len(raw_args) == 0:
         from utils.interactive_cli import run_interactive_session
 
         run_interactive_session()
         sys.exit(0)
 
-    # 4. Trợ giúp: -h hoặc --help
+    # 5. Trợ giúp: -h hoặc --help
     if "-h" in raw_args or "--help" in raw_args:
         print_help()
         sys.exit(0)
@@ -406,6 +413,12 @@ def main():
     parser.add_argument("value", nargs="?", help="Giá trị thứ nhất")
     parser.add_argument("extra", nargs="?", help="Giá trị thứ hai")
     parser.add_argument("limit", nargs="?", help="Giới hạn số lượng (optional)")
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="store_true",
+        help="In thông tin phiên bản và mô tả",
+    )
     parser.add_argument(
         "-a", "--anti", action="store_true", help="Dùng Antigravity IDE thay vì VSCode"
     )

@@ -59,6 +59,7 @@ mda dld spotify "https://open.spotify.com/playlist/..." audio --folder "D:\Music
 - `mda open -a`: mở project trong Antigravity IDE.
 - `mda open -f`: mở thư mục project trong File Explorer.
 - `mda git commit -m "<message>"`: chạy helper commit/push.
+- `mda -v` / `mda --version`: in thông tin phiên bản chính thức và mô tả công cụ bằng tiếng Anh.
 - `mda --info` / `mda <type> --info` / `mda <type> <action> --info`: in mô tả chi tiết từ catalog `src/contents/app_features.yml` (vẫn hỗ trợ alias `--des`).
 
 ## Yêu Cầu

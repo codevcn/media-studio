@@ -1,5 +1,7 @@
 mdia_tool:
   dispatcher_flags:
+    - flag: "-v / --version"
+      description: "In thông tin phiên bản và mô tả của công cụ (bằng tiếng Anh)."
     - flag: "--info"
       description: "In mô tả chi tiết của lệnh từ app_features.yml (không thực thi lệnh)."
     - flag: "-a / --anti"

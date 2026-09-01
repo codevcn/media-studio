@@ -68,6 +68,8 @@ media-studio/
     │   └── video_player/
     │       └── video_player.py         # GUI PySide6 phát song song 2 video để so sánh input/output
     │
+    ├── version.py                  # Quản lý phiên bản chính thức (v0.1.0) và metadata mô tả tiếng Anh
+    │
     ├── configs/
     │   ├── paths.py                    # Cấu hình đường dẫn gốc (ROOT_FOLDER_PATH, CONTENTS_FOLDER_PATH)
     │   └── configs.json                # Config JSON mẫu / legacy
@@ -147,6 +149,7 @@ mda <type> <action> [value] [extra] [limit] [flags]
 | `dld` | `ytb`, `fb`, `insta`, `tiktok`, `spot`, `bili`, `scloud`, `twitter`... | `<url> [option] [flags]` | Tải media đa nền tảng qua `yt-dlp` + `aria2c` hoặc `spotDL` (`src/features/downloader/run_downloader.py`). |
 
 ### 3.3. Các cờ (Flags) đáng chú ý
+- `-v`, `--version`: In thông tin phiên bản chính thức (`v0.1.0`) và mô tả ngắn bằng tiếng Anh (`src/version.py`).
 - `--info`: In mô tả chi tiết, cú pháp, tham số và điều kiện của lệnh từ `src/contents/app_features.yml` ra terminal kèm màu sắc (hỗ trợ tra cứu 3 cấp độ: `mda --info`, `mda <type> --info`, `mda <type> <action> --info`). Vẫn hỗ trợ alias `--des`.
 - `--option <opt>`: Chọn loại/chất lượng tải cho downloader: `good-vid` (mặc định 720p), `best-vid` (gốc cao nhất), `audio`, `sub` (phụ đề SRT/VTT), `thumb` (ảnh bìa), `img` (toàn bộ ảnh trong bài viết).
 - `--threads <n>`: Số kết nối song song cho `aria2c` khi tải (mặc định: 4).
